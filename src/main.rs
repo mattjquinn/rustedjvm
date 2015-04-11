@@ -1,10 +1,13 @@
 #![feature(slice_patterns)]
 
+extern crate rustedjvm;
+
 use std::error::Error;
 use std::fs::File;
 use std::io::prelude::*;
 use std::path::Path;
 use std::str;
+use rustedjvm::constant_pool::*;
 
 fn main() {
     let path = Path::new("HelloWorld.class");
@@ -57,10 +60,9 @@ fn main() {
                 byte_idx = utf8_end_byte;
             },
             0x7 => {
-                let name_index = bytecodes[byte_idx + 1] + bytecodes[byte_idx + 2];
+                let const_class = CONSTANT_Class::from_bytecodes(&bytecodes, &mut byte_idx);
                 println!("{}{}:\tCONSTANT_Class[name_index={}]",
-                         indent, n, name_index);
-                byte_idx = byte_idx + 3;
+                         indent, n, const_class.name_idx);
             },
             0x8 => {
                 let string_index = bytecodes[byte_idx + 1] + bytecodes[byte_idx + 2];

@@ -1,5 +1,8 @@
 [package]
-
 name = "jvm_class_files"
 version = "0.0.1"
 authors = ["Matt Quinn <matt@mattjquinn.com>"]
+
+[lib]
+name = "rustedjvm"
+path = "src/rustedjvm/lib.rs"
