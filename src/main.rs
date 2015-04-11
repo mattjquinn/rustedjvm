@@ -35,7 +35,24 @@ fn main() {
 
     let constant_pool_size = bytecodes[8] + bytecodes[9];
 
-    println!("Constant pool count: {}", constant_pool_size);
+    println!("Constant Pool (Count: {})", constant_pool_size);
+    println!("===================================================");
+
+    let mut byte_idx = 10;
+    let indent = "  ";
+    for n in 1 .. constant_pool_size {
+        match bytecodes[byte_idx] {
+            0xa => {
+                let class_index = bytecodes[byte_idx + 1] + bytecodes[byte_idx + 2];
+                let name_and_type = bytecodes[byte_idx + 3] + bytecodes[byte_idx + 4];
+                println!("{}{}:\tCONSTANT_MethodRef[class_index={}, name_and_type={}]",
+                        indent, n, class_index, name_and_type);
+                byte_idx = byte_idx + 5;
+            },
+            unsupported_code => panic!("[ERROR] Constant pool entry \
+                    not supported: 0x{:x}", unsupported_code),
+        };
+    };
 
     //for x in v.iter() {
     //    println!("{:x}", x);
