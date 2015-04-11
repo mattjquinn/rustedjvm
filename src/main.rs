@@ -60,15 +60,14 @@ fn main() {
                 byte_idx = utf8_end_byte;
             },
             0x7 => {
-                let const_class = CONSTANT_Class::from_bytecodes(&bytecodes, &mut byte_idx);
+                let entry = CONSTANT_Class::from_bytecodes(&bytecodes, &mut byte_idx);
                 println!("{}{}:\tCONSTANT_Class[name_index={}]",
-                         indent, n, const_class.name_idx);
+                         indent, n, entry.name_idx);
             },
             0x8 => {
-                let string_index = bytecodes[byte_idx + 1] + bytecodes[byte_idx + 2];
+                let entry = CONSTANT_String::from_bytecodes(&bytecodes, &mut byte_idx);
                 println!("{}{}:\tCONSTANT_String[string_index={}]",
-                         indent, n, string_index);
-                byte_idx = byte_idx + 3;
+                         indent, n, entry.string_idx);
             },
             0x9 => {
                 let class_index = bytecodes[byte_idx + 1] + bytecodes[byte_idx + 2];
