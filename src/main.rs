@@ -1,3 +1,5 @@
+#![feature(slice_patterns)]
+
 use std::error::Error;
 use std::fs::File;
 use std::io::prelude::*;
@@ -17,7 +19,13 @@ fn main() {
     match file.read_to_end(&mut v) {
         Err(why) => panic!("[ERROR] Unable to read {}: {}",
                 display, Error::description(&why)),
-        Ok(_) => print!("{} contains:\n{}\n", display, v.len()),
+        Ok(_) => println!("{} contains {} bytes.", display, v.len()),
+    };
+
+    let magic_slice = &v[0..4];
+    match magic_slice {
+        [0xca, 0xfe, 0xba, 0xbe] => println!("Magic header is present."),
+        _ => panic!("[ERROR] File is not a valid class file (magic header absent)."),
     }
 
     for x in v.iter() {
