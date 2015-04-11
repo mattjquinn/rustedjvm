@@ -1,0 +1,5 @@
+[package]
+
+name = "jvm_class_files"
+version = "0.0.1"
+authors = ["Matt Quinn <matt@mattjquinn.com>"]
