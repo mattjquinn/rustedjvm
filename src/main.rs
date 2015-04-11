@@ -4,6 +4,7 @@ use std::error::Error;
 use std::fs::File;
 use std::io::prelude::*;
 use std::path::Path;
+use std::str;
 
 fn main() {
     let path = Path::new("HelloWorld.class");
@@ -42,6 +43,19 @@ fn main() {
     let indent = "  ";
     for n in 1 .. constant_pool_size {
         match bytecodes[byte_idx] {
+            0x1 => {
+                // Bytecodes are u8, but slicing requires arguments of type usize.
+                let length: usize = (bytecodes[byte_idx + 1] + bytecodes[byte_idx + 2]) as usize;
+                let utf8_start_byte = byte_idx + 3;
+                let utf8_end_byte = byte_idx + 3 + length;
+                let utf8_str = match str::from_utf8(&bytecodes[utf8_start_byte..utf8_end_byte]) {
+                        Ok(n) => n,
+                        Err(e) => panic!("[ERROR] Expected utf8 string, but is not valid: {:?}", e),
+                };
+                println!("{}{}:\tCONSTANT_Utf8[length={}, utf8_str=\"{}\"]",
+                         indent, n, length, utf8_str);
+                byte_idx = utf8_end_byte;
+            },
             0x7 => {
                 let name_index = bytecodes[byte_idx + 1] + bytecodes[byte_idx + 2];
                 println!("{}{}:\tCONSTANT_Class[name_index={}]",
@@ -72,8 +86,4 @@ fn main() {
                     not supported: 0x{:x}", unsupported_code),
         };
     };
-
-    //for x in v.iter() {
-    //    println!("{:x}", x);
-    //}
 }
