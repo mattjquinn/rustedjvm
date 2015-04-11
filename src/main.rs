@@ -75,11 +75,9 @@ fn main() {
                         indent, n, entry.class_idx, entry.name_and_type_idx);
             },
             0xa => {
-                let class_index = bytecodes[byte_idx + 1] + bytecodes[byte_idx + 2];
-                let name_and_type = bytecodes[byte_idx + 3] + bytecodes[byte_idx + 4];
+                let entry = CONSTANT_MethodRef::from_bytecodes(&bytecodes, &mut byte_idx);
                 println!("{}{}:\tCONSTANT_MethodRef[class_index={}, name_and_type={}]",
-                        indent, n, class_index, name_and_type);
-                byte_idx = byte_idx + 5;
+                        indent, n, entry.class_idx, entry.name_and_type_idx);
             },
             unsupported_code => panic!("[ERROR] Constant pool entry \
                     not supported: 0x{:x}", unsupported_code),
