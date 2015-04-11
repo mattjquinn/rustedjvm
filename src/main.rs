@@ -6,7 +6,6 @@ use std::error::Error;
 use std::fs::File;
 use std::io::prelude::*;
 use std::path::Path;
-use std::str;
 use rustedjvm::constant_pool::*;
 
 fn main() {
@@ -47,17 +46,9 @@ fn main() {
     for n in 1 .. constant_pool_size {
         match bytecodes[byte_idx] {
             0x1 => {
-                // Bytecodes are u8, but slicing requires arguments of type usize.
-                let length: usize = (bytecodes[byte_idx + 1] + bytecodes[byte_idx + 2]) as usize;
-                let utf8_start_byte = byte_idx + 3;
-                let utf8_end_byte = byte_idx + 3 + length;
-                let utf8_str = match str::from_utf8(&bytecodes[utf8_start_byte..utf8_end_byte]) {
-                        Ok(n) => n,
-                        Err(e) => panic!("[ERROR] Expected utf8 string, but is not valid: {:?}", e),
-                };
-                println!("{}{}:\tCONSTANT_Utf8[length={}, utf8_str=\"{}\"]",
-                         indent, n, length, utf8_str);
-                byte_idx = utf8_end_byte;
+                let entry = CONSTANT_Utf8::from_bytecodes(&bytecodes, &mut byte_idx);
+                println!("{}{}:\tCONSTANT_Utf8[utf8_str=\"{}\"]",
+                         indent, n, entry.utf8_str);
             },
             0x7 => {
                 let entry = CONSTANT_Class::from_bytecodes(&bytecodes, &mut byte_idx);
