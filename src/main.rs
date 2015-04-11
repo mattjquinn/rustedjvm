@@ -42,6 +42,12 @@ fn main() {
     let indent = "  ";
     for n in 1 .. constant_pool_size {
         match bytecodes[byte_idx] {
+            0x7 => {
+                let name_index = bytecodes[byte_idx + 1] + bytecodes[byte_idx + 2];
+                println!("{}{}:\tCONSTANT_Class[name_index={}]",
+                         indent, n, name_index);
+                byte_idx = byte_idx + 3;
+            },
             0x8 => {
                 let string_index = bytecodes[byte_idx + 1] + bytecodes[byte_idx + 2];
                 println!("{}{}:\tCONSTANT_String[string_index={}]",
