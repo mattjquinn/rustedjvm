@@ -73,5 +73,11 @@ fn main() {
     byte_idx = byte_idx + 2;
     println!("Super class' constant pool entry idx: 0x{:x}", super_class_const_pool_entry_idx);
 
+    let interface_count = bytecodes[byte_idx] + bytecodes[byte_idx + 1];
+    byte_idx = byte_idx + 2;
+    println!("Interface count: {}", interface_count);
+
+    assert!(interface_count == 0, "[ERROR] Classes w/ interfaces are not yet supported.");
+
     println!("Byte idx is 0x{:x}", byte_idx);
 }
