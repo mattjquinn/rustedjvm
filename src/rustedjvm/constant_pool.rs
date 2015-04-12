@@ -1,11 +1,12 @@
 use std::str;
 
 pub enum ConstantPoolEntry<'a> {
+    Utf8(CONSTANT_Utf8<'a>),
     Class(CONSTANT_Class),
     String(CONSTANT_String),
     FieldRef(CONSTANT_FieldRef),
     MethodRef(CONSTANT_MethodRef),
-    Utf8(CONSTANT_Utf8<'a>),
+    NameAndType(CONSTANT_NameAndType),
 }
 
 pub struct CONSTANT_Class {
@@ -24,6 +25,11 @@ pub struct CONSTANT_FieldRef {
 pub struct CONSTANT_MethodRef {
     pub class_idx: u16,
     pub name_and_type_idx: u16,
+}
+
+pub struct CONSTANT_NameAndType {
+    pub name_idx: u16,
+    pub descriptor_idx: u16,
 }
 
 // Lifetime must be made explict
@@ -47,6 +53,8 @@ impl<'a> ConstantPoolEntry<'a> {
                     CONSTANT_FieldRef::from_bytecodes(bytecodes, byte_idx))),
             0xa => Ok(ConstantPoolEntry::MethodRef(
                     CONSTANT_MethodRef::from_bytecodes(bytecodes, byte_idx))),
+            0xc => Ok(ConstantPoolEntry::NameAndType(
+                    CONSTANT_NameAndType::from_bytecodes(bytecodes, byte_idx))),
             unsupported_code => Err(format!("Unsupported bytecode 0x{:x}", unsupported_code)),
         }
     }
@@ -70,7 +78,32 @@ impl<'a> ConstantPoolEntry<'a> {
             ConstantPoolEntry::MethodRef(ref s) => format!(
                 "CONSTANT_MethodRef[class_idx={}, name_and_type_idx={}]",
                     s.class_idx, s.name_and_type_idx),
+            ConstantPoolEntry::NameAndType(ref s) => format!(
+                "CONSTANT_NameAndType[name_idx={}, descriptor_idx={}]",
+                    s.name_idx, s.descriptor_idx),
         }
+    }
+}
+
+impl<'a> CONSTANT_Utf8<'a> {
+
+    // The explict 'a lifetime tags link the bytecode array with the returned struct,
+    // because the string slice reference is only valid as long as the bytecode array is alive.
+    pub fn from_bytecodes(bytecodes: &'a Vec<u8>, byte_idx: &mut usize) -> CONSTANT_Utf8<'a> {
+        // Bytecodes are u8, but slicing requires arguments of type usize.
+        let length: usize = (bytecodes[*byte_idx + 1] + bytecodes[*byte_idx + 2]) as usize;
+        let utf8_start_byte = *byte_idx + 3;
+        let utf8_end_byte = *byte_idx + 3 + length;
+        let utf8_byte_slice: &[u8] = &bytecodes[utf8_start_byte..utf8_end_byte];
+        let utf8_str = match str::from_utf8(utf8_byte_slice) {
+                Ok(n) => n,
+                Err(e) => panic!("[ERROR] Expected utf8 string, but is not valid: {:?}", e),
+        };
+        let entry = CONSTANT_Utf8 {
+            utf8_str: utf8_str,
+        };
+        *byte_idx = utf8_end_byte;
+        entry
     }
 }
 
@@ -116,24 +149,13 @@ impl CONSTANT_MethodRef {
     }
 }
 
-impl<'a> CONSTANT_Utf8<'a> {
-
-    // The explict 'a lifetime tags link the bytecode array with the returned struct,
-    // because the string slice reference is only valid as long as the bytecode array is alive.
-    pub fn from_bytecodes(bytecodes: &'a Vec<u8>, byte_idx: &mut usize) -> CONSTANT_Utf8<'a> {
-        // Bytecodes are u8, but slicing requires arguments of type usize.
-        let length: usize = (bytecodes[*byte_idx + 1] + bytecodes[*byte_idx + 2]) as usize;
-        let utf8_start_byte = *byte_idx + 3;
-        let utf8_end_byte = *byte_idx + 3 + length;
-        let utf8_byte_slice: &[u8] = &bytecodes[utf8_start_byte..utf8_end_byte];
-        let utf8_str = match str::from_utf8(utf8_byte_slice) {
-                Ok(n) => n,
-                Err(e) => panic!("[ERROR] Expected utf8 string, but is not valid: {:?}", e),
+impl CONSTANT_NameAndType {
+    pub fn from_bytecodes(bytecodes: &Vec<u8>, byte_idx: &mut usize) -> CONSTANT_NameAndType {
+        let entry = CONSTANT_NameAndType {
+            name_idx: (bytecodes[*byte_idx + 1] + bytecodes[*byte_idx + 2]) as u16,
+            descriptor_idx: (bytecodes[*byte_idx + 3] + bytecodes[*byte_idx + 4]) as u16,
         };
-        let entry = CONSTANT_Utf8 {
-            utf8_str: utf8_str,
-        };
-        *byte_idx = utf8_end_byte;
+        *byte_idx = *byte_idx + 5;
         entry
     }
 }
