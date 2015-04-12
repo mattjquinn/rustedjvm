@@ -7,6 +7,7 @@ use std::fs::File;
 use std::io::prelude::*;
 use std::path::Path;
 use rustedjvm::constant_pool::*;
+use rustedjvm::methods::*;
 
 fn main() {
     let path = Path::new("HelloWorld.class");
@@ -84,6 +85,21 @@ fn main() {
     println!("Field count: {}", field_count);
 
     assert!(field_count == 0, "[ERROR] Classes w/ fields are not yet supported.");
+
+    let method_count = bytecodes[byte_idx] + bytecodes[byte_idx + 1];
+    byte_idx = byte_idx + 2;
+    println!("Method count: {}", method_count);
+
+    println!("BEGIN Methods (Count: {})", method_count);
+    println!("===================================================");
+
+    for n in 0 .. method_count {
+        let method = Method::from_bytecodes(&bytecodes, &mut byte_idx);
+        println!("{}{}:\t{}", indent, n, method.to_string());
+    };
+
+    println!("END Methods");
+    println!("===================================================");
 
     println!("Byte idx is 0x{:x}", byte_idx);
 }
