@@ -38,11 +38,17 @@ fn main() {
 
     let constant_pool_size = bytecodes[8] + bytecodes[9];
 
-    println!("Constant Pool (Count: {})", constant_pool_size);
+    // The JVM spec states that the number of entries in the constant pool is actually
+    // one less than the actual count, hence the subtraction by 1:
+    println!("BEGIN Constant Pool (Count: {})", constant_pool_size - 1);
     println!("===================================================");
 
     let mut byte_idx = 10;
     let indent = "  ";
+
+    // The JVM spec states that the number of entries in the constant
+    // pool is actually one less than the actual count, and that entries
+    // start at index 1. Hence: "1 .. constant_pool_size (latter bound is exclusive)"
     for n in 1 .. constant_pool_size {
         let const_pool_entry = match ConstantPoolEntry::from_bytecodes(&bytecodes, &mut byte_idx) {
             Ok(entry) => entry,
@@ -51,4 +57,13 @@ fn main() {
 
         println!("{}{}:\t{}", indent, n, const_pool_entry.to_string());
     };
+
+    println!("END Constant Pool");
+    println!("===================================================");
+
+    let access_flags = bytecodes[byte_idx] + bytecodes[byte_idx + 1];
+    byte_idx = byte_idx + 2;
+    println!("Access flags: 0x{:x}", access_flags);
+
+    println!("Byte idx is 0x{:x}", byte_idx);
 }
