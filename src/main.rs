@@ -44,34 +44,11 @@ fn main() {
     let mut byte_idx = 10;
     let indent = "  ";
     for n in 1 .. constant_pool_size {
-        match bytecodes[byte_idx] {
-            0x1 => {
-                let entry = CONSTANT_Utf8::from_bytecodes(&bytecodes, &mut byte_idx);
-                println!("{}{}:\tCONSTANT_Utf8[utf8_str=\"{}\"]",
-                         indent, n, entry.utf8_str);
-            },
-            0x7 => {
-                let entry = CONSTANT_Class::from_bytecodes(&bytecodes, &mut byte_idx);
-                println!("{}{}:\tCONSTANT_Class[name_index={}]",
-                         indent, n, entry.name_idx);
-            },
-            0x8 => {
-                let entry = CONSTANT_String::from_bytecodes(&bytecodes, &mut byte_idx);
-                println!("{}{}:\tCONSTANT_String[string_index={}]",
-                         indent, n, entry.string_idx);
-            },
-            0x9 => {
-                let entry = CONSTANT_FieldRef::from_bytecodes(&bytecodes, &mut byte_idx);
-                println!("{}{}:\tCONSTANT_FieldRef[class_index={}, name_and_type={}]",
-                        indent, n, entry.class_idx, entry.name_and_type_idx);
-            },
-            0xa => {
-                let entry = CONSTANT_MethodRef::from_bytecodes(&bytecodes, &mut byte_idx);
-                println!("{}{}:\tCONSTANT_MethodRef[class_index={}, name_and_type={}]",
-                        indent, n, entry.class_idx, entry.name_and_type_idx);
-            },
-            unsupported_code => panic!("[ERROR] Constant pool entry \
-                    not supported: 0x{:x}", unsupported_code),
+        let const_pool_entry = match ConstantPoolEntry::from_bytecodes(&bytecodes, &mut byte_idx) {
+            Ok(entry) => entry,
+            Err(error) => panic!("[ERROR] Failed to get constant pool entry: {:?}", error),
         };
+
+        println!("{}{}:\t{}", indent, n, const_pool_entry.to_string());
     };
 }

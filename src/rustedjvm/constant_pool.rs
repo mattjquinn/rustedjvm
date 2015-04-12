@@ -1,5 +1,13 @@
 use std::str;
 
+pub enum ConstantPoolEntry<'a> {
+    Class(CONSTANT_Class),
+    String(CONSTANT_String),
+    FieldRef(CONSTANT_FieldRef),
+    MethodRef(CONSTANT_MethodRef),
+    Utf8(CONSTANT_Utf8<'a>),
+}
+
 pub struct CONSTANT_Class {
     pub name_idx: u16,
 }
@@ -23,6 +31,35 @@ pub struct CONSTANT_MethodRef {
 // for as long as the underlying bytecode array lives.
 pub struct CONSTANT_Utf8<'a> {
     pub utf8_str: &'a str,
+}
+
+impl<'a> ConstantPoolEntry<'a> {
+    pub fn from_bytecodes(bytecodes: &'a Vec<u8>, byte_idx: &mut usize)
+            -> Result<ConstantPoolEntry<'a>, String> {
+        match bytecodes[*byte_idx] {
+            0x1 => Ok(ConstantPoolEntry::Utf8(
+                    CONSTANT_Utf8::from_bytecodes(bytecodes, byte_idx))),
+            0x7 => Ok(ConstantPoolEntry::Class(
+                    CONSTANT_Class::from_bytecodes(bytecodes, byte_idx))),
+            0x8 => Ok(ConstantPoolEntry::String(
+                    CONSTANT_String::from_bytecodes(bytecodes, byte_idx))),
+            0x9 => Ok(ConstantPoolEntry::FieldRef(
+                    CONSTANT_FieldRef::from_bytecodes(bytecodes, byte_idx))),
+            0xa => Ok(ConstantPoolEntry::MethodRef(
+                    CONSTANT_MethodRef::from_bytecodes(bytecodes, byte_idx))),
+            unsupported_code => Err(format!("Unsupported bytecode 0x{:x}", unsupported_code)),
+        }
+    }
+
+    pub fn to_string(&self) -> String {
+        match *self {
+            ConstantPoolEntry::Utf8(_) => format!("UTF8"),
+            ConstantPoolEntry::Class(_) => format!("Class"),
+            ConstantPoolEntry::String(_) => format!("String"),
+            ConstantPoolEntry::FieldRef(_) => format!("FieldRef"),
+            ConstantPoolEntry::MethodRef(_) => format!("MethodRef"),
+        }
+    }
 }
 
 impl CONSTANT_Class {
