@@ -65,5 +65,13 @@ fn main() {
     byte_idx = byte_idx + 2;
     println!("Access flags: 0x{:x}", access_flags);
 
+    let this_class_const_pool_entry_idx = bytecodes[byte_idx] + bytecodes[byte_idx + 1];
+    byte_idx = byte_idx + 2;
+    println!("This class' constant pool entry idx: 0x{:x}", this_class_const_pool_entry_idx);
+
+    let super_class_const_pool_entry_idx = bytecodes[byte_idx] + bytecodes[byte_idx + 1];
+    byte_idx = byte_idx + 2;
+    println!("Super class' constant pool entry idx: 0x{:x}", super_class_const_pool_entry_idx);
+
     println!("Byte idx is 0x{:x}", byte_idx);
 }
