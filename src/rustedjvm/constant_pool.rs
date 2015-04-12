@@ -53,11 +53,23 @@ impl<'a> ConstantPoolEntry<'a> {
 
     pub fn to_string(&self) -> String {
         match *self {
-            ConstantPoolEntry::Utf8(_) => format!("UTF8"),
-            ConstantPoolEntry::Class(_) => format!("Class"),
-            ConstantPoolEntry::String(_) => format!("String"),
-            ConstantPoolEntry::FieldRef(_) => format!("FieldRef"),
-            ConstantPoolEntry::MethodRef(_) => format!("MethodRef"),
+            /*
+             * For all of the below matches, a reference to
+             * the underlying struct must be used; this is because we have
+             * borrowed self, and thus cannot take ownership of anything owned by self.
+             */
+            ConstantPoolEntry::Utf8(ref s) => format!(
+                "CONSTANT_Utf8[utf8_str=\"{}\"]", s.utf8_str),
+            ConstantPoolEntry::Class(ref s) => format!(
+                "CONSTANT_Class[name_index={}]", s.name_idx),
+            ConstantPoolEntry::String(ref s) => format!(
+                "CONSTANT_String[string_index={}]", s.string_idx),
+            ConstantPoolEntry::FieldRef(ref s) => format!(
+                "CONSTANT_FieldRef[class_idx={}, name_and_type_idx={}]",
+                    s.class_idx, s.name_and_type_idx),
+            ConstantPoolEntry::MethodRef(ref s) => format!(
+                "CONSTANT_MethodRef[class_idx={}, name_and_type_idx={}]",
+                    s.class_idx, s.name_and_type_idx),
         }
     }
 }
