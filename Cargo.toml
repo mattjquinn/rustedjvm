@@ -1,5 +1,5 @@
 [package]
-name = "jvm_class_files"
+name = "rusted_jvm"
 version = "0.0.1"
 authors = ["Matt Quinn <matt@mattjquinn.com>"]
 
