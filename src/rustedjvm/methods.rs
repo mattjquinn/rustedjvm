@@ -46,11 +46,9 @@ impl Method {
                 self.access_flags, self.name_idx, self.descriptor_idx,
                 self.attrs_count);
 
-       for attr in self.attributes {
-            string_rep = string_rep + format!("\tAttributes:\n\
-                \t\t- attr_name_idx={}\n\
-                \t\t- attr_length={}\n",
-                attr.attr_name_idx, attr.attr_length);
+        for attr in self.attributes.iter() {
+            string_rep = string_rep + &format!("\tAttribute:\n\
+                    \t\t- {}\n", attr.to_string());
         }
 
         string_rep
