@@ -6,6 +6,7 @@ use std::error::Error;
 use std::fs::File;
 use std::io::prelude::*;
 use std::path::Path;
+use std::collections::HashMap;
 use rustedjvm::constant_pool::*;
 use rustedjvm::methods::*;
 
@@ -46,6 +47,7 @@ fn main() {
 
     let mut byte_idx = 10;
     let indent = "  ";
+    let mut constant_pool = HashMap::new();
 
     // The JVM spec states that the number of entries in the constant
     // pool is actually one less than the actual count, and that entries
@@ -57,6 +59,7 @@ fn main() {
         };
 
         println!("{}{}:\t{}", indent, n, const_pool_entry.to_string());
+        constant_pool.insert(n as u16, const_pool_entry);
     };
 
     println!("END Constant Pool");
@@ -94,7 +97,7 @@ fn main() {
     println!("===================================================");
 
     for n in 0 .. method_count {
-        let method = Method::from_bytecodes(&bytecodes, &mut byte_idx);
+        let method = Method::from_bytecodes(&bytecodes, &mut byte_idx, &constant_pool);
         println!("{}{}:\t{}", indent, n, method.to_string());
     };
 
