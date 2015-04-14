@@ -47,8 +47,8 @@ impl Method {
                 self.attrs_count);
 
         for attr in self.attributes.iter() {
-            string_rep = string_rep + &format!("\tAttribute:\n\
-                    \t\t- {}\n", attr.to_string());
+            string_rep = string_rep + &format!("\tAttribute:{}",
+                                               attr.to_string());
         }
 
         string_rep
