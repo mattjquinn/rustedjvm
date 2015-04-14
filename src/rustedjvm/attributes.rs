@@ -72,9 +72,9 @@ impl<'a> ATTRIBUTE_Code<'a> {
                           + bytecodes[*byte_idx + 1]) as u16;
         *byte_idx = *byte_idx + 2;
 
-        let code_length: usize = (bytecodes[*byte_idx]
-                           + bytecodes[*byte_idx + 1]) as usize;
-        *byte_idx = *byte_idx + 2;
+        let code_length: usize = bytecodes[*byte_idx..*byte_idx+4]
+                .iter().fold(0, |s, &x| s + x) as usize;
+        *byte_idx = *byte_idx + 4;
 
         let code_start_byte = *byte_idx;
         let code_end_byte = *byte_idx + code_length;

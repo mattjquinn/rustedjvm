@@ -99,6 +99,7 @@ fn main() {
     for n in 0 .. method_count {
         let method = Method::from_bytecodes(&bytecodes, &mut byte_idx, &constant_pool);
         println!("{}{}:\t{}", indent, n, method.to_string());
+        println!("Byte idx is 0x{:x}", byte_idx);
     };
 
     println!("END Methods");
