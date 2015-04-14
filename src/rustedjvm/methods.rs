@@ -4,17 +4,18 @@ use attributes::*;
 use constant_pool::*;
 use std::string;
 
-pub struct Method {
+pub struct Method<'a> {
     pub access_flags: u16,
     pub name_idx: u16,
     pub descriptor_idx: u16,
     pub attrs_count: u16,
-    pub attributes: Vec<Attribute>,
+    pub attributes: Vec<Attribute<'a>>,
 }
 
-impl Method {
-    pub fn from_bytecodes(bytecodes: &Vec<u8>, byte_idx: &mut usize,
-                          constant_pool: &HashMap<u16, ConstantPoolEntry>) -> Method {
+impl<'a> Method<'a> {
+    pub fn from_bytecodes(bytecodes: &'a Vec<u8>, byte_idx: &mut usize,
+                          constant_pool: &HashMap<u16,
+                          ConstantPoolEntry>) -> Method<'a> {
 
         let access_flags = (bytecodes[*byte_idx] + bytecodes[*byte_idx + 1]) as u16;
         let name_idx = (bytecodes[*byte_idx + 2] + bytecodes[*byte_idx + 3]) as u16;
