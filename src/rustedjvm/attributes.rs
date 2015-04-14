@@ -14,6 +14,7 @@ pub struct ATTRIBUTE_Code<'a> {
     pub max_locals: u16,
     pub code_length: usize,
     pub code_slice: &'a[u8],
+    pub exception_table_length: usize,
 }
 
 impl<'a> Attribute<'a> {
@@ -49,9 +50,10 @@ impl<'a> Attribute<'a> {
                 \t\t- attr_length={}\n\
                 \t\t- max_stack={}\n\
                 \t\t- max_locals={}\n\
-                \t\t- code_length={}",
+                \t\t- code_length={}\n\
+                \t\t- exception_table_length={}",
                 s.attr_name_idx, s.attr_length, s.max_stack,
-                s.max_locals, s.code_length),
+                s.max_locals, s.code_length, s.exception_table_length),
         }
     }
 }
@@ -81,6 +83,10 @@ impl<'a> ATTRIBUTE_Code<'a> {
         let code_slice: &[u8] = &bytecodes[code_start_byte..code_end_byte];
         *byte_idx = code_end_byte;
 
+        let exception_table_length: usize = bytecodes[*byte_idx..*byte_idx+4]
+            .iter().fold(0, |s, &x| s + x) as usize;
+        *byte_idx = *byte_idx + 4;
+
         ATTRIBUTE_Code {
             attr_name_idx: attr_name_idx,
             attr_length: attr_length,
@@ -88,6 +94,7 @@ impl<'a> ATTRIBUTE_Code<'a> {
             max_locals: max_locals,
             code_length: code_length,
             code_slice: code_slice,
+            exception_table_length: exception_table_length,
         }
     }
 }
