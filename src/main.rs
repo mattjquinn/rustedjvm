@@ -7,7 +7,7 @@ use std::fs::File;
 use std::io::prelude::*;
 use std::path::Path;
 use std::collections::HashMap;
-use rustedjvm::constant_pool::*;
+use rustedjvm::constants::*;
 use rustedjvm::methods::*;
 
 fn main() {

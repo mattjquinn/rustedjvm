@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use attributes::*;
-use constant_pool::*;
+use constants::*;
 use std::string;
 
 pub struct Method<'a> {

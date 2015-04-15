@@ -1,7 +1,8 @@
 use std::str;
 use std::collections::HashMap;
 
-use constant_pool::*;
+use constants::*;
+use exceptions::*;
 
 pub enum Attribute<'a> {
     Code(ATTRIBUTE_Code<'a>),
@@ -15,6 +16,7 @@ pub struct ATTRIBUTE_Code<'a> {
     pub code_length: usize,
     pub code_slice: &'a[u8],
     pub exception_table_length: usize,
+    pub exception_table: Vec<ExceptionTableEntry>,
 }
 
 impl<'a> Attribute<'a> {
@@ -87,6 +89,12 @@ impl<'a> ATTRIBUTE_Code<'a> {
             .iter().fold(0, |s, &x| s + x) as usize;
         *byte_idx = *byte_idx + 4;
 
+        let mut exception_table = Vec::new();
+        for n in 0 .. exception_table_length {
+            let entry = ExceptionTableEntry::from_bytecodes(bytecodes, byte_idx);
+            exception_table.push(entry);
+        }
+
         ATTRIBUTE_Code {
             attr_name_idx: attr_name_idx,
             attr_length: attr_length,
@@ -95,6 +103,7 @@ impl<'a> ATTRIBUTE_Code<'a> {
             code_length: code_length,
             code_slice: code_slice,
             exception_table_length: exception_table_length,
+            exception_table: exception_table,
         }
     }
 }
