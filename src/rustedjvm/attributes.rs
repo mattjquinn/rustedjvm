@@ -47,15 +47,24 @@ impl<'a> Attribute<'a> {
 
     pub fn to_string(&self) -> String {
         match *self {
-            Attribute::Code(ref s) => format!("ATTRIBUTE_Code:\n\
-                \t\t- attr_name_idx={}\n\
-                \t\t- attr_length={}\n\
-                \t\t- max_stack={}\n\
-                \t\t- max_locals={}\n\
-                \t\t- code_length={}\n\
-                \t\t- exception_table_length={}",
-                s.attr_name_idx, s.attr_length, s.max_stack,
-                s.max_locals, s.code_length, s.exception_table_length),
+            Attribute::Code(ref s) => {
+                let mut string_rep = format!("ATTRIBUTE_Code:\n\
+                    \t\t- attr_name_idx={}\n\
+                    \t\t- attr_length={}\n\
+                    \t\t- max_stack={}\n\
+                    \t\t- max_locals={}\n\
+                    \t\t- code_length={}\n\
+                    \t\t- exception_table_length={}\n",
+                    s.attr_name_idx, s.attr_length, s.max_stack,
+                    s.max_locals, s.code_length, s.exception_table_length);
+
+                for entry in s.exception_table.iter() {
+                    string_rep = string_rep + &format!(
+                        "\t\tException Handler:{}", entry.to_string());
+                }
+
+                string_rep
+            }
         }
     }
 }
