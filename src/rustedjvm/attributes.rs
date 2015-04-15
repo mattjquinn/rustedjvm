@@ -17,6 +17,7 @@ pub struct ATTRIBUTE_Code<'a> {
     pub code_slice: &'a[u8],
     pub exception_table_length: usize,
     pub exception_table: Vec<ExceptionTableEntry>,
+    pub attribute_count: u16,
 }
 
 impl<'a> Attribute<'a> {
@@ -54,9 +55,11 @@ impl<'a> Attribute<'a> {
                     \t\t- max_stack={}\n\
                     \t\t- max_locals={}\n\
                     \t\t- code_length={}\n\
-                    \t\t- exception_table_length={}\n",
+                    \t\t- exception_table_length={}\n\
+                    \t\t- attribute_count={}",
                     s.attr_name_idx, s.attr_length, s.max_stack,
-                    s.max_locals, s.code_length, s.exception_table_length);
+                    s.max_locals, s.code_length, s.exception_table_length,
+                    s.attribute_count);
 
                 for entry in s.exception_table.iter() {
                     string_rep = string_rep + &format!(
@@ -104,6 +107,10 @@ impl<'a> ATTRIBUTE_Code<'a> {
             exception_table.push(entry);
         }
 
+        let attribute_count: u16 = (bytecodes[*byte_idx]
+                                    + bytecodes[*byte_idx + 1]) as u16;
+        *byte_idx = *byte_idx + 2;
+
         ATTRIBUTE_Code {
             attr_name_idx: attr_name_idx,
             attr_length: attr_length,
@@ -113,6 +120,7 @@ impl<'a> ATTRIBUTE_Code<'a> {
             code_slice: code_slice,
             exception_table_length: exception_table_length,
             exception_table: exception_table,
+            attribute_count: attribute_count,
         }
     }
 }
