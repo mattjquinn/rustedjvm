@@ -94,9 +94,9 @@ impl<'a> ATTRIBUTE_Code<'a> {
         let code_slice: &[u8] = &bytecodes[code_start_byte..code_end_byte];
         *byte_idx = code_end_byte;
 
-        let exception_table_length: usize = bytecodes[*byte_idx..*byte_idx+4]
-            .iter().fold(0, |s, &x| s + x) as usize;
-        *byte_idx = *byte_idx + 4;
+        let exception_table_length: usize = (bytecodes[*byte_idx]
+                                             + bytecodes[*byte_idx + 1]) as usize;
+        *byte_idx = *byte_idx + 2;
 
         let mut exception_table = Vec::new();
         for n in 0 .. exception_table_length {
