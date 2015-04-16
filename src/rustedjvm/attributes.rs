@@ -6,6 +6,7 @@ use exceptions::*;
 
 pub enum Attribute<'a> {
     Code(ATTRIBUTE_Code<'a>),
+    LineNumberTable(ATTRIBUTE_LineNumberTable),
 }
 
 pub struct ATTRIBUTE_Code<'a> {
@@ -18,6 +19,12 @@ pub struct ATTRIBUTE_Code<'a> {
     pub exception_table_length: usize,
     pub exception_table: Vec<ExceptionTableEntry>,
     pub attribute_count: u16,
+    pub attributes: Vec<Attribute<'a>>,
+}
+
+pub struct ATTRIBUTE_LineNumberTable {
+    pub attr_name_idx: u16,
+    pub attr_length: u16,
 }
 
 impl<'a> Attribute<'a> {
@@ -40,8 +47,11 @@ impl<'a> Attribute<'a> {
         match name_constant.utf8_str {
             "Code" => Attribute::Code(
                     ATTRIBUTE_Code::from_bytecodes(
-                        attr_name_idx, bytecodes, byte_idx)),
-            _ => panic!("Expected \"Code\" for attribute name, encountered: {}",
+                        attr_name_idx, bytecodes, byte_idx, constant_pool)),
+            "LineNumberTable" => Attribute::LineNumberTable(
+                    ATTRIBUTE_LineNumberTable::from_bytecodes(
+                        attr_name_idx, bytecodes, byte_idx, constant_pool)),
+            _ => panic!("Unexpected attribute name encountered: {}",
                     name_constant.utf8_str),
         }
     }
@@ -56,7 +66,7 @@ impl<'a> Attribute<'a> {
                     \t\t- max_locals={}\n\
                     \t\t- code_length={}\n\
                     \t\t- exception_table_length={}\n\
-                    \t\t- attribute_count={}",
+                    \t\t- attribute_count={}\n",
                     s.attr_name_idx, s.attr_length, s.max_stack,
                     s.max_locals, s.code_length, s.exception_table_length,
                     s.attribute_count);
@@ -66,7 +76,18 @@ impl<'a> Attribute<'a> {
                         "\t\tException Handler:{}", entry.to_string());
                 }
 
+                for attr in s.attributes.iter() {
+                    string_rep = string_rep + &format!(
+                        "\t\tAttribute:{}", attr.to_string());
+                }
+
                 string_rep
+            },
+            Attribute::LineNumberTable(ref s) => {
+                format!("ATTRIBUTE_LineNumberTable:\n\
+                    \t\t\t- attr_name_idx={}\n\
+                    \t\t\t- attr_length={}",
+                    s.attr_name_idx, s.attr_length)
             }
         }
     }
@@ -74,7 +95,9 @@ impl<'a> Attribute<'a> {
 
 impl<'a> ATTRIBUTE_Code<'a> {
     pub fn from_bytecodes(attr_name_idx: u16, bytecodes: &'a Vec<u8>,
-                          byte_idx: &mut usize) -> ATTRIBUTE_Code<'a> {
+                          byte_idx: &mut usize,
+                          constant_pool: &HashMap<u16, ConstantPoolEntry>)
+                          -> ATTRIBUTE_Code<'a> {
 
         let attr_length = bytecodes[*byte_idx..*byte_idx+4]
                 .iter().fold(0, |s, &x| s + x) as u16;
@@ -111,6 +134,13 @@ impl<'a> ATTRIBUTE_Code<'a> {
                                     + bytecodes[*byte_idx + 1]) as u16;
         *byte_idx = *byte_idx + 2;
 
+        let mut attributes: Vec<Attribute> = Vec::new();
+        for n in 0 .. attribute_count {
+            let attr = Attribute::from_bytecodes(
+                    bytecodes, byte_idx, constant_pool);
+            attributes.push(attr);
+        }
+
         ATTRIBUTE_Code {
             attr_name_idx: attr_name_idx,
             attr_length: attr_length,
@@ -121,6 +151,24 @@ impl<'a> ATTRIBUTE_Code<'a> {
             exception_table_length: exception_table_length,
             exception_table: exception_table,
             attribute_count: attribute_count,
+            attributes: attributes,
+        }
+    }
+}
+
+impl ATTRIBUTE_LineNumberTable {
+    pub fn from_bytecodes(attr_name_idx: u16, bytecodes: &Vec<u8>,
+                          byte_idx: &mut usize,
+                          constant_pool: &HashMap<u16, ConstantPoolEntry>)
+                          -> ATTRIBUTE_LineNumberTable {
+
+        let attr_length = bytecodes[*byte_idx..*byte_idx+4]
+                .iter().fold(0, |s, &x| s + x) as u16;
+        *byte_idx = *byte_idx + 4;
+
+        ATTRIBUTE_LineNumberTable {
+            attr_name_idx: attr_name_idx,
+            attr_length: attr_length,
         }
     }
 }
