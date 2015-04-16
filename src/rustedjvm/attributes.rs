@@ -25,6 +25,21 @@ pub struct ATTRIBUTE_Code<'a> {
 pub struct ATTRIBUTE_LineNumberTable {
     pub attr_name_idx: u16,
     pub attr_length: u16,
+    pub line_number_table_length: u16,
+    pub line_nbr_table_entries: Vec<LineNumberTableEntry>,
+}
+
+pub struct LineNumberTableEntry {
+    pub start_pc: u16,
+    pub line_nbr: u16,
+}
+
+impl LineNumberTableEntry {
+    pub fn to_string(&self) -> String {
+        format!("LineNumberTableEntry:\n\
+            \t\t\t\t- start_pc={}\n\
+            \t\t\t\t- line_nbr={}\n", self.start_pc, self.line_nbr)
+    }
 }
 
 impl<'a> Attribute<'a> {
@@ -84,10 +99,18 @@ impl<'a> Attribute<'a> {
                 string_rep
             },
             Attribute::LineNumberTable(ref s) => {
-                format!("ATTRIBUTE_LineNumberTable:\n\
+                let mut string_rep = format!("ATTRIBUTE_LineNumberTable:\n\
                     \t\t\t- attr_name_idx={}\n\
-                    \t\t\t- attr_length={}",
-                    s.attr_name_idx, s.attr_length)
+                    \t\t\t- attr_length={}\n\
+                    \t\t\t- line_number_table_length={}\n",
+                    s.attr_name_idx, s.attr_length, s.line_number_table_length);
+
+                for entry in s.line_nbr_table_entries.iter() {
+                    string_rep = string_rep + &format!(
+                        "\t\t\t{}", entry.to_string());
+                }
+
+                string_rep
             }
         }
     }
@@ -166,9 +189,31 @@ impl ATTRIBUTE_LineNumberTable {
                 .iter().fold(0, |s, &x| s + x) as u16;
         *byte_idx = *byte_idx + 4;
 
+        let line_number_table_length: u16 = (bytecodes[*byte_idx]
+                + bytecodes[*byte_idx + 1]) as u16;
+        *byte_idx = *byte_idx + 2;
+
+        let mut line_nbr_table_entries: Vec<LineNumberTableEntry> = Vec::new();
+        for n in 0 .. line_number_table_length {
+            let start_pc: u16 = (bytecodes[*byte_idx]
+                                 + bytecodes[*byte_idx + 1]) as u16;
+            *byte_idx = *byte_idx + 2;
+
+            let line_nbr: u16 = (bytecodes[*byte_idx]
+                                 + bytecodes[*byte_idx + 1]) as u16;
+            *byte_idx = *byte_idx + 2;
+
+            line_nbr_table_entries.push(LineNumberTableEntry {
+                start_pc: start_pc,
+                line_nbr: line_nbr,
+            });
+        }
+
         ATTRIBUTE_LineNumberTable {
             attr_name_idx: attr_name_idx,
             attr_length: attr_length,
+            line_number_table_length: line_number_table_length,
+            line_nbr_table_entries: line_nbr_table_entries,
         }
     }
 }
