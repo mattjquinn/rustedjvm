@@ -7,6 +7,7 @@ use exceptions::*;
 pub enum Attribute<'a> {
     Code(ATTRIBUTE_Code<'a>),
     LineNumberTable(ATTRIBUTE_LineNumberTable),
+    SourceFile(ATTRIBUTE_SourceFile),
 }
 
 pub struct ATTRIBUTE_Code<'a> {
@@ -27,6 +28,10 @@ pub struct ATTRIBUTE_LineNumberTable {
     pub attr_length: u16,
     pub line_number_table_length: u16,
     pub line_nbr_table_entries: Vec<LineNumberTableEntry>,
+}
+
+pub struct ATTRIBUTE_SourceFile {
+    pub attr_name_idx: u16,
 }
 
 pub struct LineNumberTableEntry {
@@ -65,6 +70,9 @@ impl<'a> Attribute<'a> {
                         attr_name_idx, bytecodes, byte_idx, constant_pool)),
             "LineNumberTable" => Attribute::LineNumberTable(
                     ATTRIBUTE_LineNumberTable::from_bytecodes(
+                        attr_name_idx, bytecodes, byte_idx, constant_pool)),
+            "SourceFile" => Attribute::SourceFile(
+                    ATTRIBUTE_SourceFile::from_bytecodes(
                         attr_name_idx, bytecodes, byte_idx, constant_pool)),
             _ => panic!("Unexpected attribute name encountered: {}",
                     name_constant.utf8_str),
@@ -111,6 +119,11 @@ impl<'a> Attribute<'a> {
                 }
 
                 string_rep
+            },
+            Attribute::SourceFile(ref s) => {
+                format!("ATTRIBUTE_SourceFile:\n\
+                    \t- attr_name_idx={}",
+                    s.attr_name_idx)
             }
         }
     }
@@ -214,6 +227,17 @@ impl ATTRIBUTE_LineNumberTable {
             attr_length: attr_length,
             line_number_table_length: line_number_table_length,
             line_nbr_table_entries: line_nbr_table_entries,
+        }
+    }
+}
+
+impl ATTRIBUTE_SourceFile {
+    pub fn from_bytecodes(attr_name_idx: u16, bytecodes: &Vec<u8>,
+                          byte_idx: &mut usize,
+                          constant_pool: &HashMap<u16, ConstantPoolEntry>)
+                          -> ATTRIBUTE_SourceFile {
+        ATTRIBUTE_SourceFile {
+            attr_name_idx: attr_name_idx,
         }
     }
 }

@@ -9,6 +9,7 @@ use std::path::Path;
 use std::collections::HashMap;
 use rustedjvm::constants::*;
 use rustedjvm::methods::*;
+use rustedjvm::attributes::*;
 
 fn main() {
     let path = Path::new("HelloWorld.class");
@@ -104,6 +105,16 @@ fn main() {
 
     println!("END Methods");
     println!("===================================================");
+
+    let src_file_attr_count = bytecodes[byte_idx] + bytecodes[byte_idx + 1];
+    byte_idx = byte_idx + 2;
+    println!("Source file attr count: {}", src_file_attr_count);
+
+    for _ in 0 .. src_file_attr_count {
+        let src_file_attr = Attribute::from_bytecodes(
+            &bytecodes, &mut byte_idx, &constant_pool);
+        println!("{}", src_file_attr.to_string());
+    }
 
     println!("Byte idx is 0x{:x}", byte_idx);
 }
