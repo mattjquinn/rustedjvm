@@ -32,6 +32,8 @@ pub struct ATTRIBUTE_LineNumberTable {
 
 pub struct ATTRIBUTE_SourceFile {
     pub attr_name_idx: u16,
+    pub attr_length: u16,
+    pub src_file_idx: u16,
 }
 
 pub struct LineNumberTableEntry {
@@ -122,8 +124,10 @@ impl<'a> Attribute<'a> {
             },
             Attribute::SourceFile(ref s) => {
                 format!("ATTRIBUTE_SourceFile:\n\
-                    \t- attr_name_idx={}",
-                    s.attr_name_idx)
+                    \t- attr_name_idx={}\n\
+                    \t- attr_length={}\n\
+                    \t- src_file_idx={}",
+                    s.attr_name_idx, s.attr_length, s.src_file_idx)
             }
         }
     }
@@ -236,8 +240,19 @@ impl ATTRIBUTE_SourceFile {
                           byte_idx: &mut usize,
                           constant_pool: &HashMap<u16, ConstantPoolEntry>)
                           -> ATTRIBUTE_SourceFile {
+
+        let attr_length = bytecodes[*byte_idx..*byte_idx+4]
+                .iter().fold(0, |s, &x| s + x) as u16;
+        *byte_idx = *byte_idx + 4;
+
+        let src_file_idx: u16 = (bytecodes[*byte_idx]
+                            + bytecodes[*byte_idx + 1]) as u16;
+        *byte_idx = *byte_idx + 2;
+
         ATTRIBUTE_SourceFile {
             attr_name_idx: attr_name_idx,
+            attr_length: attr_length,
+            src_file_idx: src_file_idx,
         }
     }
 }
