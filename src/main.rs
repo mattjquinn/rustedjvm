@@ -2,6 +2,7 @@
 
 extern crate rustedjvm;
 
+use std::env;
 use std::error::Error;
 use std::fs::File;
 use std::io::prelude::*;
@@ -12,7 +13,16 @@ use rustedjvm::methods::*;
 use rustedjvm::attributes::*;
 
 fn main() {
-    let path = Path::new("HelloWorld.class");
+
+    let args: Vec<String> = env::args().collect();
+    if args.len() != 2 {
+        println!("Usage: $ rusted_jvm <ClassNameToRun>");
+        return;
+    }
+
+    let ref class_name = args[1];
+    let class_file_name = &format!("{}.class", &class_name);
+    let path = Path::new(class_file_name);
     let display = path.display();
 
     let mut file = match File::open(&path) {
