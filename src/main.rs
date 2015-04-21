@@ -3,6 +3,7 @@ extern crate rustedjvm;
 use std::env;
 
 use rustedjvm::classes::Class;
+use rustedjvm::interpreter;
 
 fn main() {
 
@@ -14,4 +15,6 @@ fn main() {
 
     let ref class_name = args[1];
     let class: Class = Class::from_class_file(class_name);
+
+    interpreter::run(&class);
 }
