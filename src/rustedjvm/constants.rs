@@ -55,7 +55,8 @@ impl<'a> ConstantPoolEntry<'a> {
                     CONSTANT_MethodRef::from_bytecodes(bytecodes, byte_idx))),
             0xc => Ok(ConstantPoolEntry::NameAndType(
                     CONSTANT_NameAndType::from_bytecodes(bytecodes, byte_idx))),
-            unsupported_code => Err(format!("Unsupported bytecode 0x{:x}", unsupported_code)),
+            unsupported_code => Err(format!(
+                    "Unsupported bytecode 0x{:x}", unsupported_code)),
         }
     }
 
@@ -64,7 +65,8 @@ impl<'a> ConstantPoolEntry<'a> {
             /*
              * For all of the below matches, a reference to
              * the underlying struct must be used; this is because we have
-             * borrowed self, and thus cannot take ownership of anything owned by self.
+             * borrowed self, and thus cannot take
+             * ownership of anything owned by self.
              */
             ConstantPoolEntry::Utf8(ref s) => format!(
                 "CONSTANT_Utf8[utf8_str=\"{}\"]", s.utf8_str),
@@ -87,17 +89,22 @@ impl<'a> ConstantPoolEntry<'a> {
 
 impl<'a> CONSTANT_Utf8<'a> {
 
-    // The explict 'a lifetime tags link the bytecode array with the returned struct,
-    // because the string slice reference is only valid as long as the bytecode array is alive.
-    pub fn from_bytecodes(bytecodes: &'a Vec<u8>, byte_idx: &mut usize) -> CONSTANT_Utf8<'a> {
+    // The explict 'a lifetime tags link the bytecode
+    // array with the returned struct,
+    // because the string slice reference is only
+    // valid as long as the bytecode array is alive.
+    pub fn from_bytecodes(bytecodes: &'a Vec<u8>,
+                          byte_idx: &mut usize) -> CONSTANT_Utf8<'a> {
         // Bytecodes are u8, but slicing requires arguments of type usize.
-        let length: usize = (bytecodes[*byte_idx + 1] + bytecodes[*byte_idx + 2]) as usize;
+        let length: usize = (bytecodes[*byte_idx + 1]
+                             + bytecodes[*byte_idx + 2]) as usize;
         let utf8_start_byte = *byte_idx + 3;
         let utf8_end_byte = *byte_idx + 3 + length;
         let utf8_byte_slice: &[u8] = &bytecodes[utf8_start_byte..utf8_end_byte];
         let utf8_str = match str::from_utf8(utf8_byte_slice) {
                 Ok(n) => n,
-                Err(e) => panic!("[ERROR] Expected utf8 string, but is not valid: {:?}", e),
+                Err(e) => panic!("[ERROR] Expected utf8 string, \
+                                 but is not valid: {:?}", e),
         };
         let entry = CONSTANT_Utf8 {
             utf8_str: utf8_str,
@@ -108,9 +115,11 @@ impl<'a> CONSTANT_Utf8<'a> {
 }
 
 impl CONSTANT_Class {
-    pub fn from_bytecodes(bytecodes: &Vec<u8>, byte_idx: &mut usize) -> CONSTANT_Class {
+    pub fn from_bytecodes(bytecodes: &Vec<u8>,
+                          byte_idx: &mut usize) -> CONSTANT_Class {
         let entry = CONSTANT_Class {
-            name_idx: (bytecodes[*byte_idx + 1] + bytecodes[*byte_idx + 2]) as u16,
+            name_idx: (bytecodes[*byte_idx + 1]
+                       + bytecodes[*byte_idx + 2]) as u16,
         };
         *byte_idx = *byte_idx + 3;
         entry
@@ -118,9 +127,11 @@ impl CONSTANT_Class {
 }
 
 impl CONSTANT_String {
-    pub fn from_bytecodes(bytecodes: &Vec<u8>, byte_idx: &mut usize) -> CONSTANT_String {
+    pub fn from_bytecodes(bytecodes: &Vec<u8>,
+                          byte_idx: &mut usize) -> CONSTANT_String {
         let entry = CONSTANT_String {
-            string_idx: (bytecodes[*byte_idx + 1] + bytecodes[*byte_idx + 2]) as u16,
+            string_idx: (bytecodes[*byte_idx + 1]
+                         + bytecodes[*byte_idx + 2]) as u16,
         };
         *byte_idx = *byte_idx + 3;
         entry
@@ -128,10 +139,13 @@ impl CONSTANT_String {
 }
 
 impl CONSTANT_FieldRef {
-    pub fn from_bytecodes(bytecodes: &Vec<u8>, byte_idx: &mut usize) -> CONSTANT_FieldRef {
+    pub fn from_bytecodes(bytecodes: &Vec<u8>,
+                          byte_idx: &mut usize) -> CONSTANT_FieldRef {
         let entry = CONSTANT_FieldRef {
-            class_idx: (bytecodes[*byte_idx + 1] + bytecodes[*byte_idx + 2]) as u16,
-            name_and_type_idx: (bytecodes[*byte_idx + 3] + bytecodes[*byte_idx + 4]) as u16,
+            class_idx: (bytecodes[*byte_idx + 1]
+                        + bytecodes[*byte_idx + 2]) as u16,
+            name_and_type_idx: (bytecodes[*byte_idx + 3]
+                                + bytecodes[*byte_idx + 4]) as u16,
         };
         *byte_idx = *byte_idx + 5;
         entry
@@ -139,10 +153,13 @@ impl CONSTANT_FieldRef {
 }
 
 impl CONSTANT_MethodRef {
-    pub fn from_bytecodes(bytecodes: &Vec<u8>, byte_idx: &mut usize) -> CONSTANT_MethodRef {
+    pub fn from_bytecodes(bytecodes: &Vec<u8>,
+                          byte_idx: &mut usize) -> CONSTANT_MethodRef {
         let entry = CONSTANT_MethodRef {
-            class_idx: (bytecodes[*byte_idx + 1] + bytecodes[*byte_idx + 2]) as u16,
-            name_and_type_idx: (bytecodes[*byte_idx + 3] + bytecodes[*byte_idx + 4]) as u16,
+            class_idx: (bytecodes[*byte_idx + 1]
+                        + bytecodes[*byte_idx + 2]) as u16,
+            name_and_type_idx: (bytecodes[*byte_idx + 3]
+                                + bytecodes[*byte_idx + 4]) as u16,
         };
         *byte_idx = *byte_idx + 5;
         entry
@@ -150,10 +167,13 @@ impl CONSTANT_MethodRef {
 }
 
 impl CONSTANT_NameAndType {
-    pub fn from_bytecodes(bytecodes: &Vec<u8>, byte_idx: &mut usize) -> CONSTANT_NameAndType {
+    pub fn from_bytecodes(bytecodes: &Vec<u8>,
+                          byte_idx: &mut usize) -> CONSTANT_NameAndType {
         let entry = CONSTANT_NameAndType {
-            name_idx: (bytecodes[*byte_idx + 1] + bytecodes[*byte_idx + 2]) as u16,
-            descriptor_idx: (bytecodes[*byte_idx + 3] + bytecodes[*byte_idx + 4]) as u16,
+            name_idx: (bytecodes[*byte_idx + 1]
+                       + bytecodes[*byte_idx + 2]) as u16,
+            descriptor_idx: (bytecodes[*byte_idx + 3]
+                             + bytecodes[*byte_idx + 4]) as u16,
         };
         *byte_idx = *byte_idx + 5;
         entry

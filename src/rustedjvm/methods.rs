@@ -17,15 +17,20 @@ impl<'a> Method<'a> {
                           constant_pool: &HashMap<u16,
                           ConstantPoolEntry>) -> Method<'a> {
 
-        let access_flags = (bytecodes[*byte_idx] + bytecodes[*byte_idx + 1]) as u16;
-        let name_idx = (bytecodes[*byte_idx + 2] + bytecodes[*byte_idx + 3]) as u16;
-        let descriptor_idx = (bytecodes[*byte_idx + 4] + bytecodes[*byte_idx + 5]) as u16;
-        let attrs_count = (bytecodes[*byte_idx + 6] + bytecodes[*byte_idx + 7]) as u16;
+        let access_flags = (bytecodes[*byte_idx]
+                            + bytecodes[*byte_idx + 1]) as u16;
+        let name_idx = (bytecodes[*byte_idx + 2]
+                        + bytecodes[*byte_idx + 3]) as u16;
+        let descriptor_idx = (bytecodes[*byte_idx + 4]
+                              + bytecodes[*byte_idx + 5]) as u16;
+        let attrs_count = (bytecodes[*byte_idx + 6]
+                           + bytecodes[*byte_idx + 7]) as u16;
         *byte_idx = *byte_idx + 8;
 
         let mut attributes = Vec::new();
         for n in 0 .. attrs_count {
-            let attr = Attribute::from_bytecodes(bytecodes, byte_idx, constant_pool);
+            let attr = Attribute::from_bytecodes(
+                bytecodes, byte_idx, constant_pool);
             attributes.push(attr);
         };
 
