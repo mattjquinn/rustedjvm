@@ -14,7 +14,7 @@ pub struct ClassFile<'a> {
 }
 
 pub struct Class<'a> {
-    pub methods: Vec<Method<'a>>,
+    pub methods: HashMap<&'a str, Method<'a>>,
 }
 
 impl<'a> ClassFile<'a> {
@@ -125,13 +125,13 @@ impl<'a> ClassFile<'a> {
         println!("BEGIN Methods (Count: {})", method_count);
         println!("===================================================");
 
-        let mut methods: Vec<Method> = Vec::new();
+        let mut methods = HashMap::new();
         for n in 0 .. method_count {
             let method = Method::from_bytecodes(
                 &self.buffer, &mut byte_idx, &constant_pool);
             println!("{}{}:\t{}", indent, n, method.to_string());
             println!("Byte idx is 0x{:x}", byte_idx);
-            methods.push(method);
+            methods.insert(method.name, method);
         };
 
         println!("END Methods");
