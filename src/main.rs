@@ -14,8 +14,8 @@ fn main() {
     }
 
     let ref class_name = args[1];
-    let class = Class::new(class_name);
-    class.parse();
+    let class_file = ClassFile::new(class_name);
+    let class = class_file.parse();
 
-//    interpreter::run(&class);
+    interpreter::run(class);
 }

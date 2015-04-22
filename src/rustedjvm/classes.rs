@@ -8,13 +8,17 @@ use constants::*;
 use methods::*;
 use attributes::*;
 
-pub struct Class<'a> {
+pub struct ClassFile<'a> {
     pub class_name: &'a String,
     pub buffer: Vec<u8>,
 }
 
-impl<'a> Class<'a> {
-    pub fn new(class_name: &'a String) -> Class {
+pub struct Class<'a> {
+    pub methods: Vec<Method<'a>>,
+}
+
+impl<'a> ClassFile<'a> {
+    pub fn new(class_name: &'a String) -> ClassFile {
         let class_file_name = &format!("{}.class", class_name);
         let path = Path::new(class_file_name);
         let display = path.display();
@@ -32,13 +36,13 @@ impl<'a> Class<'a> {
             Ok(_) => println!("{} contains {} bytes.", display, bytecodes.len()),
         };
 
-        Class {
+        ClassFile {
             class_name: class_name,
             buffer: bytecodes.clone(),
         }
     }
 
-    pub fn parse(&self) {
+    pub fn parse(&self) -> Class {
 
         let magic_slice = &self.buffer[0..4];
         match magic_slice {
@@ -121,11 +125,13 @@ impl<'a> Class<'a> {
         println!("BEGIN Methods (Count: {})", method_count);
         println!("===================================================");
 
+        let mut methods: Vec<Method> = Vec::new();
         for n in 0 .. method_count {
             let method = Method::from_bytecodes(
                 &self.buffer, &mut byte_idx, &constant_pool);
             println!("{}{}:\t{}", indent, n, method.to_string());
             println!("Byte idx is 0x{:x}", byte_idx);
+            methods.push(method);
         };
 
         println!("END Methods");
@@ -142,5 +148,9 @@ impl<'a> Class<'a> {
         }
 
         println!("Byte idx is 0x{:x}", byte_idx);
+
+        Class {
+            methods: methods,
+        }
     }
 }
