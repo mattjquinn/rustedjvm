@@ -10,7 +10,7 @@ pub struct Method<'a> {
     pub name: &'a str,
     pub descriptor_idx: u16,
     pub attrs_count: u16,
-    pub attributes: Vec<Attribute<'a>>,
+    pub attributes: HashMap<&'a str, Attribute<'a>>,
 }
 
 impl<'a> Method<'a> {
@@ -34,11 +34,16 @@ impl<'a> Method<'a> {
                             in constant pool.", name_idx),
         };
 
-        let mut attributes = Vec::new();
+        let mut attributes = HashMap::new();
         for n in 0 .. attrs_count {
             let attr = Attribute::from_bytecodes(
                 bytecodes, byte_idx, constant_pool);
-            attributes.push(attr);
+            let attr_name = match attr {
+                Attribute::Code(ref s) => s.attr_name,
+                Attribute::LineNumberTable(ref s) => s.attr_name,
+                Attribute::SourceFile(ref s) => s.attr_name,
+            };
+            attributes.insert(attr_name, attr);
         };
 
         Method {
@@ -60,7 +65,7 @@ impl<'a> Method<'a> {
                 self.access_flags, self.name_idx, self.descriptor_idx,
                 self.attrs_count);
 
-        for attr in self.attributes.iter() {
+        for (_, attr) in self.attributes.iter() {
             string_rep = string_rep + &format!("\tAttribute:{}",
                                                attr.to_string());
         }

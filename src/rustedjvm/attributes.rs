@@ -6,12 +6,13 @@ use exceptions::*;
 
 pub enum Attribute<'a> {
     Code(ATTRIBUTE_Code<'a>),
-    LineNumberTable(ATTRIBUTE_LineNumberTable),
-    SourceFile(ATTRIBUTE_SourceFile),
+    LineNumberTable(ATTRIBUTE_LineNumberTable<'a>),
+    SourceFile(ATTRIBUTE_SourceFile<'a>),
 }
 
 pub struct ATTRIBUTE_Code<'a> {
     pub attr_name_idx: u16,
+    pub attr_name: &'a str,
     pub attr_length: u16,
     pub max_stack: u16,
     pub max_locals: u16,
@@ -23,15 +24,17 @@ pub struct ATTRIBUTE_Code<'a> {
     pub attributes: Vec<Attribute<'a>>,
 }
 
-pub struct ATTRIBUTE_LineNumberTable {
+pub struct ATTRIBUTE_LineNumberTable<'a> {
     pub attr_name_idx: u16,
+    pub attr_name: &'a str,
     pub attr_length: u16,
     pub line_number_table_length: u16,
     pub line_nbr_table_entries: Vec<LineNumberTableEntry>,
 }
 
-pub struct ATTRIBUTE_SourceFile {
+pub struct ATTRIBUTE_SourceFile<'a> {
     pub attr_name_idx: u16,
+    pub attr_name: &'a str,
     pub attr_length: u16,
     pub src_file_idx: u16,
 }
@@ -51,33 +54,35 @@ impl LineNumberTableEntry {
 
 impl<'a> Attribute<'a> {
     pub fn from_bytecodes(bytecodes: &'a Vec<u8>, byte_idx: &mut usize,
-                          constant_pool: &HashMap<u16, ConstantPoolEntry>)
+                          constant_pool: &HashMap<u16, ConstantPoolEntry<'a>>)
                                 -> Attribute<'a> {
 
         let attr_name_idx = (bytecodes[*byte_idx]
                              + bytecodes[*byte_idx + 1]) as u16;
         *byte_idx = *byte_idx + 2;
 
-        let name_constant: &CONSTANT_Utf8 =
-                match constant_pool.get(&attr_name_idx) {
-            Some(&ConstantPoolEntry::Utf8(ref s)) => s,
+        let attr_name = match constant_pool.get(&attr_name_idx) {
+            Some(&ConstantPoolEntry::Utf8(ref s)) => s.utf8_str,
             Some(_) => panic!("Expected Utf8 constant at \
                                    attribute name idx: {}", attr_name_idx),
             None => panic!("No entry in constant pool at idx: {}", attr_name_idx),
         };
 
-        match name_constant.utf8_str {
+        match attr_name {
             "Code" => Attribute::Code(
                     ATTRIBUTE_Code::from_bytecodes(
-                        attr_name_idx, bytecodes, byte_idx, constant_pool)),
+                        attr_name_idx, attr_name,
+                        bytecodes, byte_idx, constant_pool)),
             "LineNumberTable" => Attribute::LineNumberTable(
                     ATTRIBUTE_LineNumberTable::from_bytecodes(
-                        attr_name_idx, bytecodes, byte_idx, constant_pool)),
+                        attr_name_idx, attr_name,
+                        bytecodes, byte_idx, constant_pool)),
             "SourceFile" => Attribute::SourceFile(
                     ATTRIBUTE_SourceFile::from_bytecodes(
-                        attr_name_idx, bytecodes, byte_idx, constant_pool)),
+                        attr_name_idx, attr_name,
+                        bytecodes, byte_idx, constant_pool)),
             _ => panic!("Unexpected attribute name encountered: {}",
-                    name_constant.utf8_str),
+                    attr_name),
         }
     }
 
@@ -134,9 +139,10 @@ impl<'a> Attribute<'a> {
 }
 
 impl<'a> ATTRIBUTE_Code<'a> {
-    pub fn from_bytecodes(attr_name_idx: u16, bytecodes: &'a Vec<u8>,
+    pub fn from_bytecodes(attr_name_idx: u16, attr_name: &'a str,
+                          bytecodes: &'a Vec<u8>,
                           byte_idx: &mut usize,
-                          constant_pool: &HashMap<u16, ConstantPoolEntry>)
+                          constant_pool: &HashMap<u16, ConstantPoolEntry<'a>>)
                           -> ATTRIBUTE_Code<'a> {
 
         let attr_length = bytecodes[*byte_idx..*byte_idx+4]
@@ -183,6 +189,7 @@ impl<'a> ATTRIBUTE_Code<'a> {
 
         ATTRIBUTE_Code {
             attr_name_idx: attr_name_idx,
+            attr_name: attr_name,
             attr_length: attr_length,
             max_stack: max_stack,
             max_locals: max_locals,
@@ -196,11 +203,12 @@ impl<'a> ATTRIBUTE_Code<'a> {
     }
 }
 
-impl ATTRIBUTE_LineNumberTable {
-    pub fn from_bytecodes(attr_name_idx: u16, bytecodes: &Vec<u8>,
+impl<'a> ATTRIBUTE_LineNumberTable<'a> {
+    pub fn from_bytecodes(attr_name_idx: u16, attr_name: &'a str,
+                          bytecodes: &Vec<u8>,
                           byte_idx: &mut usize,
                           constant_pool: &HashMap<u16, ConstantPoolEntry>)
-                          -> ATTRIBUTE_LineNumberTable {
+                          -> ATTRIBUTE_LineNumberTable<'a> {
 
         let attr_length = bytecodes[*byte_idx..*byte_idx+4]
                 .iter().fold(0, |s, &x| s + x) as u16;
@@ -228,6 +236,7 @@ impl ATTRIBUTE_LineNumberTable {
 
         ATTRIBUTE_LineNumberTable {
             attr_name_idx: attr_name_idx,
+            attr_name: attr_name,
             attr_length: attr_length,
             line_number_table_length: line_number_table_length,
             line_nbr_table_entries: line_nbr_table_entries,
@@ -235,11 +244,12 @@ impl ATTRIBUTE_LineNumberTable {
     }
 }
 
-impl ATTRIBUTE_SourceFile {
-    pub fn from_bytecodes(attr_name_idx: u16, bytecodes: &Vec<u8>,
+impl<'a> ATTRIBUTE_SourceFile<'a> {
+    pub fn from_bytecodes(attr_name_idx: u16, attr_name: &'a str,
+                          bytecodes: &Vec<u8>,
                           byte_idx: &mut usize,
                           constant_pool: &HashMap<u16, ConstantPoolEntry>)
-                          -> ATTRIBUTE_SourceFile {
+                          -> ATTRIBUTE_SourceFile<'a> {
 
         let attr_length = bytecodes[*byte_idx..*byte_idx+4]
                 .iter().fold(0, |s, &x| s + x) as u16;
@@ -251,6 +261,7 @@ impl ATTRIBUTE_SourceFile {
 
         ATTRIBUTE_SourceFile {
             attr_name_idx: attr_name_idx,
+            attr_name: attr_name,
             attr_length: attr_length,
             src_file_idx: src_file_idx,
         }
