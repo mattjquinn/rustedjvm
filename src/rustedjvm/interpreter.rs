@@ -26,14 +26,16 @@ pub fn run(class: Class) {
      * the first entry of the local variable array is always
      * the "this" reference.
      */
-    let mut local_var_arr = Vec::new();
+    let mut local_var_arr
+        = Vec::with_capacity(code_attr.max_locals as usize);
     let this_ref = Object {class: &class};
     local_var_arr.push(this_ref);
 
     /*
      * Set up the operand stack, which is initially empty.
      */
-    let mut operand_stack: Vec<&Object> = Vec::new();
+    let mut operand_stack: Vec<&Object>
+        = Vec::with_capacity(code_attr.max_stack as usize);
 
     /*
      * Begin executing method bytecodes.
