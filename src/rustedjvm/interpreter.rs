@@ -30,9 +30,19 @@ pub fn run(class: Class) {
     let this_ref = Object {class: &class};
     local_var_arr.push(this_ref);
 
-    for bytecode in code_attr.code_slice {
-        println!("Bytecode: {:x}", bytecode);
-    }
+    /*
+     * Set up the operand stack, which is initially empty.
+     */
+    let mut operand_stack: Vec<Object> = Vec::new();
 
-    println!("TODO: Run <init> bytecodes.");
+    /*
+     * Begin executing method bytecodes.
+     */
+    for bytecode in code_attr.code_slice {
+        match *bytecode {
+            0x2a => panic!("TODO: Support aload_0"),
+            unsup_code => panic!("[ERROR] Encountered unsupported \
+                                  bytecode: {:x}", unsup_code),
+        }
+    }
 }
