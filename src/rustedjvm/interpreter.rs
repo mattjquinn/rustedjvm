@@ -33,16 +33,21 @@ pub fn run(class: Class) {
     /*
      * Set up the operand stack, which is initially empty.
      */
-    let mut operand_stack: Vec<Object> = Vec::new();
+    let mut operand_stack: Vec<&Object> = Vec::new();
 
     /*
      * Begin executing method bytecodes.
      */
     for bytecode in code_attr.code_slice {
         match *bytecode {
-            0x2a => panic!("TODO: Support aload_0"),
+            0x2a => aload_0(&local_var_arr, &mut operand_stack),
             unsup_code => panic!("[ERROR] Encountered unsupported \
                                   bytecode: {:x}", unsup_code),
         }
     }
+}
+
+fn aload_0<'a, 'b>(local_var_arr: &'b Vec<Object<'a>>,
+               operand_stack: &mut Vec<&'b Object<'a>>) {
+    operand_stack.push(&local_var_arr[0]);
 }
