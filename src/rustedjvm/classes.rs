@@ -44,11 +44,20 @@ impl<'a> ClassFile<'a> {
 
     pub fn parse(&self) -> Class {
 
-        let magic_slice = &self.buffer[0..4];
-        match magic_slice {
-            [0xca, 0xfe, 0xba, 0xbe] => println!("Magic header is present."),
-            _ => panic!("[ERROR] File is not a valid class \
-                        file (magic header absent)."),
+        /*
+         * TODO(mquinn): The magic header check is best implemented
+         * as a destructuring match on a slice of the buffer; this used
+         * to be the case, but rustc v1.0.0 deferred support for destructuring
+         * matches to a later version so I reverted to a simple if for now.
+         */
+        if (self.buffer[0] == 0xca
+            && self.buffer[1] == 0xfe
+            && self.buffer[2] == 0xba
+            && self.buffer[3] == 0xbe) {
+            println!("Magic header is present.");
+        } else {
+            panic!("[ERROR] File is not a valid class \
+                        file (magic header absent).");
         };
 
         let minor_version = self.buffer[4] + self.buffer[5];
