@@ -1,33 +1,33 @@
 use std::str;
 
 pub enum ConstantPoolEntry<'a> {
-    Utf8(CONSTANT_Utf8<'a>),
-    Class(CONSTANT_Class),
-    String(CONSTANT_String),
-    FieldRef(CONSTANT_FieldRef),
-    MethodRef(CONSTANT_MethodRef),
-    NameAndType(CONSTANT_NameAndType),
+    Utf8(Utf8Constant<'a>),
+    Class(ClassConstant),
+    String(StringConstant),
+    FieldRef(FieldRefConstant),
+    MethodRef(MethodRefConstant),
+    NameAndType(NameAndTypeConstant),
 }
 
-pub struct CONSTANT_Class {
+pub struct ClassConstant {
     pub name_idx: u16,
 }
 
-pub struct CONSTANT_String {
+pub struct StringConstant {
     pub string_idx: u16,
 }
 
-pub struct CONSTANT_FieldRef {
+pub struct FieldRefConstant {
     pub class_idx: u16,
     pub name_and_type_idx: u16,
 }
 
-pub struct CONSTANT_MethodRef {
+pub struct MethodRefConstant {
     pub class_idx: u16,
     pub name_and_type_idx: u16,
 }
 
-pub struct CONSTANT_NameAndType {
+pub struct NameAndTypeConstant {
     pub name_idx: u16,
     pub descriptor_idx: u16,
 }
@@ -35,7 +35,7 @@ pub struct CONSTANT_NameAndType {
 // Lifetime must be made explict
 // here because utf8_str is only valid
 // for as long as the underlying bytecode array lives.
-pub struct CONSTANT_Utf8<'a> {
+pub struct Utf8Constant<'a> {
     pub utf8_str: &'a str,
 }
 
@@ -44,17 +44,17 @@ impl<'a> ConstantPoolEntry<'a> {
             -> Result<ConstantPoolEntry<'a>, String> {
         match bytecodes[*byte_idx] {
             0x1 => Ok(ConstantPoolEntry::Utf8(
-                    CONSTANT_Utf8::from_bytecodes(bytecodes, byte_idx))),
+                    Utf8Constant::from_bytecodes(bytecodes, byte_idx))),
             0x7 => Ok(ConstantPoolEntry::Class(
-                    CONSTANT_Class::from_bytecodes(bytecodes, byte_idx))),
+                    ClassConstant::from_bytecodes(bytecodes, byte_idx))),
             0x8 => Ok(ConstantPoolEntry::String(
-                    CONSTANT_String::from_bytecodes(bytecodes, byte_idx))),
+                    StringConstant::from_bytecodes(bytecodes, byte_idx))),
             0x9 => Ok(ConstantPoolEntry::FieldRef(
-                    CONSTANT_FieldRef::from_bytecodes(bytecodes, byte_idx))),
+                    FieldRefConstant::from_bytecodes(bytecodes, byte_idx))),
             0xa => Ok(ConstantPoolEntry::MethodRef(
-                    CONSTANT_MethodRef::from_bytecodes(bytecodes, byte_idx))),
+                    MethodRefConstant::from_bytecodes(bytecodes, byte_idx))),
             0xc => Ok(ConstantPoolEntry::NameAndType(
-                    CONSTANT_NameAndType::from_bytecodes(bytecodes, byte_idx))),
+                    NameAndTypeConstant::from_bytecodes(bytecodes, byte_idx))),
             unsupported_code => Err(format!(
                     "Unsupported bytecode 0x{:x}", unsupported_code)),
         }
@@ -69,32 +69,32 @@ impl<'a> ConstantPoolEntry<'a> {
              * ownership of anything owned by self.
              */
             ConstantPoolEntry::Utf8(ref s) => format!(
-                "CONSTANT_Utf8[utf8_str=\"{}\"]", s.utf8_str),
+                "Utf8Constant[utf8_str=\"{}\"]", s.utf8_str),
             ConstantPoolEntry::Class(ref s) => format!(
-                "CONSTANT_Class[name_index={}]", s.name_idx),
+                "ClassConstant[name_index={}]", s.name_idx),
             ConstantPoolEntry::String(ref s) => format!(
-                "CONSTANT_String[string_index={}]", s.string_idx),
+                "StringConstant[string_index={}]", s.string_idx),
             ConstantPoolEntry::FieldRef(ref s) => format!(
-                "CONSTANT_FieldRef[class_idx={}, name_and_type_idx={}]",
+                "FieldRefConstant[class_idx={}, name_and_type_idx={}]",
                     s.class_idx, s.name_and_type_idx),
             ConstantPoolEntry::MethodRef(ref s) => format!(
-                "CONSTANT_MethodRef[class_idx={}, name_and_type_idx={}]",
+                "MethodRefConstant[class_idx={}, name_and_type_idx={}]",
                     s.class_idx, s.name_and_type_idx),
             ConstantPoolEntry::NameAndType(ref s) => format!(
-                "CONSTANT_NameAndType[name_idx={}, descriptor_idx={}]",
+                "NameAndTypeConstant[name_idx={}, descriptor_idx={}]",
                     s.name_idx, s.descriptor_idx),
         }
     }
 }
 
-impl<'a> CONSTANT_Utf8<'a> {
+impl<'a> Utf8Constant<'a> {
 
     // The explict 'a lifetime tags link the bytecode
     // array with the returned struct,
     // because the string slice reference is only
     // valid as long as the bytecode array is alive.
     pub fn from_bytecodes(bytecodes: &'a Vec<u8>,
-                          byte_idx: &mut usize) -> CONSTANT_Utf8<'a> {
+                          byte_idx: &mut usize) -> Utf8Constant<'a> {
         // Bytecodes are u8, but slicing requires arguments of type usize.
         let length: usize = (bytecodes[*byte_idx + 1]
                              + bytecodes[*byte_idx + 2]) as usize;
@@ -106,7 +106,7 @@ impl<'a> CONSTANT_Utf8<'a> {
                 Err(e) => panic!("[ERROR] Expected utf8 string, \
                                  but is not valid: {:?}", e),
         };
-        let entry = CONSTANT_Utf8 {
+        let entry = Utf8Constant {
             utf8_str: utf8_str,
         };
         *byte_idx = utf8_end_byte;
@@ -114,10 +114,10 @@ impl<'a> CONSTANT_Utf8<'a> {
     }
 }
 
-impl CONSTANT_Class {
+impl ClassConstant {
     pub fn from_bytecodes(bytecodes: &Vec<u8>,
-                          byte_idx: &mut usize) -> CONSTANT_Class {
-        let entry = CONSTANT_Class {
+                          byte_idx: &mut usize) -> ClassConstant {
+        let entry = ClassConstant {
             name_idx: (bytecodes[*byte_idx + 1]
                        + bytecodes[*byte_idx + 2]) as u16,
         };
@@ -126,10 +126,10 @@ impl CONSTANT_Class {
     }
 }
 
-impl CONSTANT_String {
+impl StringConstant {
     pub fn from_bytecodes(bytecodes: &Vec<u8>,
-                          byte_idx: &mut usize) -> CONSTANT_String {
-        let entry = CONSTANT_String {
+                          byte_idx: &mut usize) -> StringConstant {
+        let entry = StringConstant {
             string_idx: (bytecodes[*byte_idx + 1]
                          + bytecodes[*byte_idx + 2]) as u16,
         };
@@ -138,10 +138,10 @@ impl CONSTANT_String {
     }
 }
 
-impl CONSTANT_FieldRef {
+impl FieldRefConstant {
     pub fn from_bytecodes(bytecodes: &Vec<u8>,
-                          byte_idx: &mut usize) -> CONSTANT_FieldRef {
-        let entry = CONSTANT_FieldRef {
+                          byte_idx: &mut usize) -> FieldRefConstant {
+        let entry = FieldRefConstant {
             class_idx: (bytecodes[*byte_idx + 1]
                         + bytecodes[*byte_idx + 2]) as u16,
             name_and_type_idx: (bytecodes[*byte_idx + 3]
@@ -152,10 +152,10 @@ impl CONSTANT_FieldRef {
     }
 }
 
-impl CONSTANT_MethodRef {
+impl MethodRefConstant {
     pub fn from_bytecodes(bytecodes: &Vec<u8>,
-                          byte_idx: &mut usize) -> CONSTANT_MethodRef {
-        let entry = CONSTANT_MethodRef {
+                          byte_idx: &mut usize) -> MethodRefConstant {
+        let entry = MethodRefConstant {
             class_idx: (bytecodes[*byte_idx + 1]
                         + bytecodes[*byte_idx + 2]) as u16,
             name_and_type_idx: (bytecodes[*byte_idx + 3]
@@ -166,10 +166,10 @@ impl CONSTANT_MethodRef {
     }
 }
 
-impl CONSTANT_NameAndType {
+impl NameAndTypeConstant {
     pub fn from_bytecodes(bytecodes: &Vec<u8>,
-                          byte_idx: &mut usize) -> CONSTANT_NameAndType {
-        let entry = CONSTANT_NameAndType {
+                          byte_idx: &mut usize) -> NameAndTypeConstant {
+        let entry = NameAndTypeConstant {
             name_idx: (bytecodes[*byte_idx + 1]
                        + bytecodes[*byte_idx + 2]) as u16,
             descriptor_idx: (bytecodes[*byte_idx + 3]
