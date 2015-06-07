@@ -1,4 +1,3 @@
-use std::str;
 use std::collections::HashMap;
 
 use constants::*;
@@ -76,11 +75,11 @@ impl<'a> Attribute<'a> {
             "LineNumberTable" => Attribute::LineNumberTable(
                     LineNumberTableAttribute::from_bytecodes(
                         attr_name_idx, attr_name,
-                        bytecodes, byte_idx, constant_pool)),
+                        bytecodes, byte_idx)),
             "SourceFile" => Attribute::SourceFile(
                     SourceFileAttribute::from_bytecodes(
                         attr_name_idx, attr_name,
-                        bytecodes, byte_idx, constant_pool)),
+                        bytecodes, byte_idx)),
             _ => panic!("Unexpected attribute name encountered: {}",
                     attr_name),
         }
@@ -171,7 +170,7 @@ impl<'a> CodeAttribute<'a> {
         *byte_idx = *byte_idx + 2;
 
         let mut exception_table = Vec::new();
-        for n in 0 .. exception_table_length {
+        for _ in 0 .. exception_table_length {
             let entry = ExceptionTableEntry::from_bytecodes(bytecodes, byte_idx);
             exception_table.push(entry);
         }
@@ -181,7 +180,7 @@ impl<'a> CodeAttribute<'a> {
         *byte_idx = *byte_idx + 2;
 
         let mut attributes: Vec<Attribute> = Vec::new();
-        for n in 0 .. attribute_count {
+        for _ in 0 .. attribute_count {
             let attr = Attribute::from_bytecodes(
                     bytecodes, byte_idx, constant_pool);
             attributes.push(attr);
@@ -206,8 +205,7 @@ impl<'a> CodeAttribute<'a> {
 impl<'a> LineNumberTableAttribute<'a> {
     pub fn from_bytecodes(attr_name_idx: u16, attr_name: &'a str,
                           bytecodes: &Vec<u8>,
-                          byte_idx: &mut usize,
-                          constant_pool: &HashMap<u16, ConstantPoolEntry>)
+                          byte_idx: &mut usize)
                           -> LineNumberTableAttribute<'a> {
 
         let attr_length = bytecodes[*byte_idx..*byte_idx+4]
@@ -219,7 +217,7 @@ impl<'a> LineNumberTableAttribute<'a> {
         *byte_idx = *byte_idx + 2;
 
         let mut line_nbr_table_entries: Vec<LineNumberTableEntry> = Vec::new();
-        for n in 0 .. line_number_table_length {
+        for _ in 0 .. line_number_table_length {
             let start_pc: u16 = (bytecodes[*byte_idx]
                                  + bytecodes[*byte_idx + 1]) as u16;
             *byte_idx = *byte_idx + 2;
@@ -247,8 +245,7 @@ impl<'a> LineNumberTableAttribute<'a> {
 impl<'a> SourceFileAttribute<'a> {
     pub fn from_bytecodes(attr_name_idx: u16, attr_name: &'a str,
                           bytecodes: &Vec<u8>,
-                          byte_idx: &mut usize,
-                          constant_pool: &HashMap<u16, ConstantPoolEntry>)
+                          byte_idx: &mut usize)
                           -> SourceFileAttribute<'a> {
 
         let attr_length = bytecodes[*byte_idx..*byte_idx+4]

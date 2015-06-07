@@ -50,10 +50,10 @@ impl<'a> ClassFile<'a> {
          * to be the case, but rustc v1.0.0 deferred support for destructuring
          * matches to a later version so I reverted to a simple if for now.
          */
-        if (self.buffer[0] == 0xca
+        if self.buffer[0] == 0xca
             && self.buffer[1] == 0xfe
             && self.buffer[2] == 0xba
-            && self.buffer[3] == 0xbe) {
+            && self.buffer[3] == 0xbe {
             println!("Magic header is present.");
         } else {
             panic!("[ERROR] File is not a valid class \

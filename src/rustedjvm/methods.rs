@@ -2,7 +2,6 @@ use std::collections::HashMap;
 
 use attributes::*;
 use constants::*;
-use std::string;
 
 pub struct Method<'a> {
     pub access_flags: u16,
@@ -35,7 +34,7 @@ impl<'a> Method<'a> {
         };
 
         let mut attributes = HashMap::new();
-        for n in 0 .. attrs_count {
+        for _ in 0 .. attrs_count {
             let attr = Attribute::from_bytecodes(
                 bytecodes, byte_idx, constant_pool);
             let attr_name = match attr {
