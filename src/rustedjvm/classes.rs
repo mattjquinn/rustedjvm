@@ -14,6 +14,7 @@ pub struct ClassFile<'a> {
 }
 
 pub struct Class<'a> {
+    pub constant_pool: HashMap<u16, ConstantPoolEntry<'a>>,
     pub methods: HashMap<&'a str, Method<'a>>,
 }
 
@@ -159,6 +160,7 @@ impl<'a> ClassFile<'a> {
         println!("Byte idx is 0x{:x}", byte_idx);
 
         Class {
+            constant_pool: constant_pool,
             methods: methods,
         }
     }

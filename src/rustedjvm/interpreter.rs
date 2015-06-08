@@ -1,5 +1,6 @@
 use attributes::*;
 use classes::*;
+use constants::*;
 
 struct Object<'a> {
     class: &'a Class<'a>,
@@ -50,8 +51,8 @@ pub fn run(class: Class) {
             },
             0xb7 => {
                 invokespecial(&mut operand_stack,
-                              code_attr.code_slice[bytecode_idx+1],
-                              code_attr.code_slice[bytecode_idx+2]);
+                              code_attr.code_slice[bytecode_idx+1] as u16,
+                              code_attr.code_slice[bytecode_idx+2] as u16);
                 bytecode_idx += 3;
             },
             unsup_code => panic!("[ERROR] Encountered unsupported \
@@ -67,13 +68,70 @@ fn aload_0<'a, 'b>(local_var_arr: &'b Vec<Object<'a>>,
 }
 
 fn invokespecial(operand_stack: &mut Vec<&Object>,
-                 indexbyte1: u8,
-                 indexbyte2: u8) {
-    println!("invokespecial");
+                 indexbyte1: u16,
+                 indexbyte2: u16) {
     let object_ref: &Object = match operand_stack.pop() {
         Some(e) => e,
         None => panic!("[ERROR] Expected objectref, found None."),
     };
-    println!("indexbyte1: {}", indexbyte1);
-    println!("indexbyte2: {}", indexbyte2);
+
+    /*
+     * Join the two index bytes according to the JLS,
+     * then traverse the appropriate entries in the constant pool
+     * in order to determine the method name to invoke, along
+     * with the associated class name and method signature.
+     */
+    let method_const_idx: u16 = (indexbyte1 << 8) | indexbyte2;
+    let method_const = match object_ref
+            .class.constant_pool.get(&method_const_idx) {
+        Some(&ConstantPoolEntry::MethodRef(ref e)) => e,
+        _ => panic!("[ERROR] Expected method ref in constant \
+                     pool at index {}.", method_const_idx),
+    };
+    let class_const = match object_ref
+            .class.constant_pool.get(&method_const.class_idx) {
+        Some(&ConstantPoolEntry::Class(ref e)) => e,
+        _ => panic!("[ERROR] Expected class in constant pool \
+                     at index {}.", method_const.class_idx),
+    };
+    let class_name = match object_ref
+            .class.constant_pool.get(&class_const.name_idx) {
+        Some(&ConstantPoolEntry::Utf8(ref e)) => e,
+        _ => panic!("[ERROR] Expected utf8 in constant pool \
+                     at index {}.", class_const.name_idx),
+    };
+    let name_type_const = match object_ref
+            .class.constant_pool.get(&method_const.name_and_type_idx) {
+        Some(&ConstantPoolEntry::NameAndType(ref e)) => e,
+        _ => panic!("[ERROR] Expected name/type in constant pool \
+                     at index {}.", method_const.name_and_type_idx),
+    };
+    let method_name = match object_ref
+            .class.constant_pool.get(&name_type_const.name_idx) {
+        Some(&ConstantPoolEntry::Utf8(ref e)) => e,
+        _ => panic!("[ERROR] Expected utf8 in constant pool \
+                     at index {}.", name_type_const.name_idx),
+    };
+    let method_descriptor = match object_ref
+            .class.constant_pool.get(&name_type_const.descriptor_idx) {
+        Some(&ConstantPoolEntry::Utf8(ref e)) => e,
+        _ => panic!("[ERROR] Expected utf8 in constant pool \
+                     at index {}.", name_type_const.descriptor_idx),
+    };
+    println!("invokespecial: {}.\"{}\":{}",
+             class_name.utf8_str,
+             method_name.utf8_str,
+             method_descriptor.utf8_str);
+    if class_name.utf8_str == "java/lang/Object"
+        && method_name.utf8_str == "<init>"
+        && method_descriptor.utf8_str == "()V" {
+        /*
+         * For now, do nothing. Eventually, this
+         * conditional will be removed when it makes
+         * sense to add support for dynamic class loading.
+         */
+    } else {
+        panic!("[TODO] Encountered a method other than Object.<init>; \
+                this means it's time to support dynamic class loading.");
+    };
 }
