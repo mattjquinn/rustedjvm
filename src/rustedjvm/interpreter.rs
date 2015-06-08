@@ -12,12 +12,20 @@ pub fn run(class: Class) {
                 a main method.");
     };
 
-    let init_method = match class.methods.get("<init>") {
+    let object = Object {class: &class};
+    run_method(&object, "<init>");
+    run_method(&object, "main");
+}
+
+fn run_method(obj: &Object, method_name: &str) -> () {
+
+    let method = match obj.class.methods.get(method_name) {
         Some(e) => e,
-        None => panic!("[ERROR] Class lacks <init> method."),
+        None => panic!("[ERROR] Class lacks method: {}", method_name),
     };
 
-    let code_attr = match init_method.attributes.get("Code") {
+
+    let code_attr = match method.attributes.get("Code") {
         Some(&Attribute::Code(ref s)) => s,
         _ => panic!("[ERROR] Code attribute not found."),
     };
@@ -25,12 +33,11 @@ pub fn run(class: Class) {
     /*
      * Set up the local variable array;
      * the first entry of the local variable array is always
-     * the "this" reference.
+     * the "this" reference to the contextual object.
      */
     let mut local_var_arr
         = Vec::with_capacity(code_attr.max_locals as usize);
-    let this_ref = Object {class: &class};
-    local_var_arr.push(this_ref);
+    local_var_arr.push(obj);
 
     /*
      * Set up the operand stack, which is initially empty.
@@ -55,13 +62,16 @@ pub fn run(class: Class) {
                               code_attr.code_slice[bytecode_idx+2] as u16);
                 bytecode_idx += 3;
             },
+            0xb1 => {
+                return;
+            },
             unsup_code => panic!("[ERROR] Encountered unsupported \
                                   bytecode: {:x}", unsup_code),
         }
     }
 }
 
-fn aload_0<'a, 'b>(local_var_arr: &'b Vec<Object<'a>>,
+fn aload_0<'a, 'b>(local_var_arr: &'b Vec<&Object<'a>>,
                operand_stack: &mut Vec<&'b Object<'a>>) {
     println!("aload_0");
     operand_stack.push(&local_var_arr[0]);
