@@ -56,14 +56,20 @@ fn run_method(obj: &Object, method_name: &str) -> () {
                 aload_0(&local_var_arr, &mut operand_stack);
                 bytecode_idx += 1;
             },
+            0xb1 => {
+                return;
+            },
+            0xb2 => {
+                getstatic(&obj, &mut operand_stack,
+                          code_attr.code_slice[bytecode_idx+1] as u16,
+                          code_attr.code_slice[bytecode_idx+2] as u16);
+                bytecode_idx += 3;
+            },
             0xb7 => {
                 invokespecial(&mut operand_stack,
                               code_attr.code_slice[bytecode_idx+1] as u16,
                               code_attr.code_slice[bytecode_idx+2] as u16);
                 bytecode_idx += 3;
-            },
-            0xb1 => {
-                return;
             },
             unsup_code => panic!("[ERROR] Encountered unsupported \
                                   bytecode: {:x}", unsup_code),
@@ -128,7 +134,7 @@ fn invokespecial(operand_stack: &mut Vec<&Object>,
         _ => panic!("[ERROR] Expected utf8 in constant pool \
                      at index {}.", name_type_const.descriptor_idx),
     };
-    println!("invokespecial: {}.\"{}\":{}",
+    println!("invokespecial: Method {}.\"{}\":{}",
              class_name.utf8_str,
              method_name.utf8_str,
              method_descriptor.utf8_str);
@@ -144,4 +150,58 @@ fn invokespecial(operand_stack: &mut Vec<&Object>,
         panic!("[TODO] Encountered a method other than Object.<init>; \
                 this means it's time to support dynamic class loading.");
     };
+}
+
+fn getstatic(object_ref: &Object, operand_stack: &mut Vec<&Object>,
+             indexbyte1: u16,
+             indexbyte2: u16) {
+    /*
+     * Join the two index bytes according to the JLS,
+     * then traverse the appropriate entries in the constant pool
+     * in order to determine the static field to retrieve, along
+     * with the associated class name and method signature.
+     */
+    let field_const_idx: u16 = (indexbyte1 << 8) | indexbyte2;
+    let field_const = match object_ref
+            .class.constant_pool.get(&field_const_idx) {
+        Some(&ConstantPoolEntry::FieldRef(ref e)) => e,
+        _ => panic!("[ERROR] Expected field ref in constant \
+                     pool at index {}.", field_const_idx),
+    };
+    let class_const = match object_ref
+            .class.constant_pool.get(&field_const.class_idx) {
+        Some(&ConstantPoolEntry::Class(ref e)) => e,
+        _ => panic!("[ERROR] Expected class in constant pool \
+                     at index {}.", field_const.class_idx),
+    };
+    let class_name = match object_ref
+            .class.constant_pool.get(&class_const.name_idx) {
+        Some(&ConstantPoolEntry::Utf8(ref e)) => e,
+        _ => panic!("[ERROR] Expected utf8 in constant pool \
+                     at index {}.", class_const.name_idx),
+    };
+    let name_type_const = match object_ref
+            .class.constant_pool.get(&field_const.name_and_type_idx) {
+        Some(&ConstantPoolEntry::NameAndType(ref e)) => e,
+        _ => panic!("[ERROR] Expected name/type in constant pool \
+                     at index {}.", field_const.name_and_type_idx),
+    };
+    let field_name = match object_ref
+            .class.constant_pool.get(&name_type_const.name_idx) {
+        Some(&ConstantPoolEntry::Utf8(ref e)) => e,
+        _ => panic!("[ERROR] Expected utf8 in constant pool \
+                     at index {}.", name_type_const.name_idx),
+    };
+    let field_descriptor = match object_ref
+            .class.constant_pool.get(&name_type_const.descriptor_idx) {
+        Some(&ConstantPoolEntry::Utf8(ref e)) => e,
+        _ => panic!("[ERROR] Expected utf8 in constant pool \
+                     at index {}.", name_type_const.descriptor_idx),
+    };
+    println!("getstatic: Field {}.{}:{}",
+             class_name.utf8_str,
+             field_name.utf8_str,
+             field_descriptor.utf8_str);
+
+    panic!("TODO: Push static method/field value onto stack.");
 }
