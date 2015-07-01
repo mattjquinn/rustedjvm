@@ -23,12 +23,17 @@ fn run(class_name: &String) {
     interpreter::run(class);
 }
 
-#[test]
-fn test_simple_addition() {
-    run(&String::from("test/SimpleAddition"));
-}
+#[cfg(test)]
+mod tests {
+    use super::run;
 
-/*#[test]
-fn test_hello_world() {
-    run(&String::from("test/HelloWorld"));
-}*/
+    #[test]
+    fn test_simple_addition() {
+        run(&String::from("test/SimpleAddition"));
+    }
+
+    /*#[test]
+    fn test_hello_world() {
+        run(&String::from("test/HelloWorld"));
+    }*/
+}
