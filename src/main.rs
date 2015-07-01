@@ -11,11 +11,24 @@ fn main() {
     if args.len() != 2 {
         println!("Usage: $ rusted_jvm <ClassNameToRun>");
         return;
-    }
+    };
 
-    let ref class_name = args[1];
+    run(&args[1]);
+}
+
+fn run(class_name: &String) {
     let class_file = ClassFile::new(class_name);
     let class = class_file.parse();
 
     interpreter::run(class);
 }
+
+#[test]
+fn test_simple_addition() {
+    run(&String::from("test/SimpleAddition"));
+}
+
+/*#[test]
+fn test_hello_world() {
+    run(&String::from("test/HelloWorld"));
+}*/

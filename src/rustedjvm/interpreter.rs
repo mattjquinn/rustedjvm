@@ -6,13 +6,18 @@ struct Object<'a> {
     class: &'a Class<'a>,
 }
 
+enum Operand<'a> {
+    Ref(&'a Object<'a>),
+    Int(i32),
+}
+
 pub fn run(class: Class) {
     if !class.methods.contains_key("main") {
         panic!("[ERROR] Class provided to interpreter does not have \
                 a main method.");
     };
 
-    let object = Object {class: &class};
+    let object = Object { class: &class };
     run_method(&object, "<init>");
     run_method(&object, "main");
 }
@@ -35,14 +40,14 @@ fn run_method(obj: &Object, method_name: &str) -> () {
      * the first entry of the local variable array is always
      * the "this" reference to the contextual object.
      */
-    let mut local_var_arr
+    let mut local_var_arr : Vec<Operand>
         = Vec::with_capacity(code_attr.max_locals as usize);
-    local_var_arr.push(obj);
+    local_var_arr.push(Operand::Ref(&obj));
 
     /*
      * Set up the operand stack, which is initially empty.
      */
-    let mut operand_stack: Vec<&Object>
+    let mut operand_stack: Vec<&Operand>
         = Vec::with_capacity(code_attr.max_stack as usize);
 
     /*
@@ -52,6 +57,9 @@ fn run_method(obj: &Object, method_name: &str) -> () {
     let mut bytecode_idx: usize = 0;
     while bytecode_idx < code_attr.code_slice.len() {
         match code_attr.code_slice[bytecode_idx] {
+            0x06 => {
+                iconst_3(&mut operand_stack);
+            },
             0x2a => {
                 aload_0(&local_var_arr, &mut operand_stack);
                 bytecode_idx += 1;
@@ -77,17 +85,24 @@ fn run_method(obj: &Object, method_name: &str) -> () {
     }
 }
 
-fn aload_0<'a, 'b>(local_var_arr: &'b Vec<&Object<'a>>,
-               operand_stack: &mut Vec<&'b Object<'a>>) {
+fn iconst_3(operand_stack: &mut Vec<&Operand>) {
+    println!("iconst_3");
+    panic!("[TODO] In iconst_3, push integer literal 3 onto stack.");
+}
+
+fn aload_0<'a, 'b>(local_var_arr: &'b Vec<Operand<'a>>,
+               operand_stack: &mut Vec<&'b Operand<'a>>) {
     println!("aload_0");
     operand_stack.push(&local_var_arr[0]);
 }
 
-fn invokespecial(operand_stack: &mut Vec<&Object>,
+fn invokespecial(operand_stack: &mut Vec<&Operand>,
                  indexbyte1: u16,
                  indexbyte2: u16) {
     let object_ref: &Object = match operand_stack.pop() {
-        Some(e) => e,
+        Some(&Operand::Ref(ref e)) => e,
+        Some(&Operand::Int(_)) => panic!("[ERROR] invokespecial \
+                does not yet support integers."),
         None => panic!("[ERROR] Expected objectref, found None."),
     };
 
@@ -152,7 +167,7 @@ fn invokespecial(operand_stack: &mut Vec<&Object>,
     };
 }
 
-fn getstatic(object_ref: &Object, operand_stack: &mut Vec<&Object>,
+fn getstatic(object_ref: &Object, operand_stack: &mut Vec<&Operand>,
              indexbyte1: u16,
              indexbyte2: u16) {
     /*
