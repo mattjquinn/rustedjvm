@@ -72,6 +72,10 @@ fn run_method(obj: &Object, method_name: &str) -> () {
                 aload_0(&local_var_arr, &mut operand_stack);
                 bytecode_idx += 1;
             },
+            0x3c => {
+                istore_1(&local_var_arr, &mut operand_stack);
+                bytecode_idx += 1;
+            }
             0xb1 => {
                 return;
             },
@@ -91,6 +95,18 @@ fn run_method(obj: &Object, method_name: &str) -> () {
                                   bytecode: {:x}", unsup_code),
         }
     }
+}
+
+fn istore_1(local_var_arr: &Vec<Operand>,
+        operand_stack: &mut Vec<Operand>) {
+    println!("istore_1");
+    let operand: Operand = match operand_stack.pop() {
+        Some(e @ Operand::Int(_)) => e,
+        Some(_) => panic!("[ERROR] istore_1 expected Int at top of stack \
+                but didn't get one."),
+        None => panic!("[ERROR] istore_1 expected Int at top of stack \
+                but none was found."),
+    };
 }
 
 fn iconst_3(operand_stack: &mut Vec<Operand>) {
